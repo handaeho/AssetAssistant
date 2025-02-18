@@ -19,12 +19,13 @@ import kr.daeho.AssetAssistant.user.exception.UserException;
  * 
  * 핵심 비즈니스 로직 처리, 트랜잭션 관리, 예외 처리 등 웹 요청 및 응답을 위한 실제 로직 처리
  * 
- * 인터페이스를 상속받아 서비스를 구현함으로써, 
+ * 인터페이스를 상속받아 서비스를 구현(implements)함으로써,
  * 
- * 컨트롤러는 서비스(실제 구현체)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보보
+ * 컨트롤러는 서비스(실제 구현체)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
  * 
  * @Service: 서비스 클래스임을 명시
- * @RequiredArgsConstructor: 생성자 주입 방식을 사용하기 위한 어노테이션 (final 및 notNull 필드에 대한 생성자 자동 생성)
+ * @RequiredArgsConstructor: 생성자 주입 방식을 사용하기 위한 어노테이션
+ *                           (final 및 notNull 필드에 대한 생성자 자동 생성)
  */
 @Service
 @RequiredArgsConstructor
@@ -36,15 +37,15 @@ public class UserService implements UserInterfaces {
     @Override
     @Transactional(readOnly = true)
     public UserDto getUserInfo(String userId) {
-        if(userId == null || userId.isEmpty()){
+        if (userId == null || userId.isEmpty()) {
             throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
         }
 
-        try{
+        try {
             // DB에서 사용자 검색 후, Entity 객체로 불러오기
             UserEntity userEntity = userReposiory.findByUserId(userId);
             // Entity 객체를 Dto 객체로 변환하여 반환
-            return UserDto.convertEntityToDto(userEntity);
+            return UserDto.fromUserEntity(userEntity);
         } catch (Exception e) {
             throw new UserException("사용자 정보 조회 실패");
         }
@@ -54,24 +55,24 @@ public class UserService implements UserInterfaces {
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto) {
-        if(userDto == null) {
+        if (userDto == null) {
             throw new IllegalArgumentException("사용자 정보를 입력해 주세요.");
         }
 
         try {
             // 입력받은 Dto 객체를 Entity 객체로 변환
             UserEntity userEntity = UserEntity.builder()
-                .userId(userDto.getUserId())
-                .userName(userDto.getUserName())
-                .userPassword(userDto.getUserPassword())
-                .userAge(userDto.getUserAge())
-                .userJob(userDto.getUserJob())
-                .build();
+                    .userId(userDto.getUserId())
+                    .userName(userDto.getUserName())
+                    .userPassword(userDto.getUserPassword())
+                    .userAge(userDto.getUserAge())
+                    .userJob(userDto.getUserJob())
+                    .build();
             // 변환된 Entity 객체를 DB에 저장
             UserEntity savedUserEntity = userReposiory.save(userEntity);
             // 저장된 Entity 객체를 Dto 객체로 변환하여 반환
             // Entity의 세부 내용 노출 x. 필요한 정보만 반환
-            return UserDto.convertEntityToDto(savedUserEntity);
+            return UserDto.fromUserEntity(savedUserEntity);
         } catch (Exception e) {
             throw new UserException("사용자 정보 등록 실패");
         }
@@ -81,9 +82,9 @@ public class UserService implements UserInterfaces {
     @Override
     @Transactional
     public UserDto updateUser(UserDto userDto) {
-        if(userDto == null) {
+        if (userDto == null) {
             throw new IllegalArgumentException("사용자 정보를 입력해 주세요.");
-        } else if(userDto.getUserId() == null || userDto.getUserId().isEmpty()) {
+        } else if (userDto.getUserId() == null || userDto.getUserId().isEmpty()) {
             throw new IllegalArgumentException("올바른 사용자 아이디를 입력해 주세요.");
         }
 
@@ -91,7 +92,7 @@ public class UserService implements UserInterfaces {
             // DB에서 사용자 검색 후, Entity 객체로 불러오기
             UserEntity userEntity = userReposiory.findByUserId(userDto.getUserId());
             // 해당 사용자 아이디가 없으면 예외 발생
-            if(userEntity == null) {
+            if (userEntity == null) {
                 throw new IllegalArgumentException("사용자 아이디를 찾을 수 없습니다.");
             }
             // 입력받은 Dto 객체를 통해 사용자 정보 수정
@@ -102,7 +103,7 @@ public class UserService implements UserInterfaces {
             // 수정된 Entity 객체를 DB에 저장
             UserEntity updatedUserEntity = userReposiory.save(userEntity);
             // 수정된 Entity 객체를 Dto 객체로 변환하여 반환
-            return UserDto.convertEntityToDto(updatedUserEntity);
+            return UserDto.fromUserEntity(updatedUserEntity);
         } catch (Exception e) {
             throw new UserException("사용자 정보 수정 실패");
         }
@@ -112,7 +113,7 @@ public class UserService implements UserInterfaces {
     @Override
     @Transactional
     public void deleteUser(String userId) {
-        if(userId == null || userId.isEmpty()) {
+        if (userId == null || userId.isEmpty()) {
             throw new IllegalArgumentException("사용자 아이디를 찾을 수 없습니다.");
         }
         try {

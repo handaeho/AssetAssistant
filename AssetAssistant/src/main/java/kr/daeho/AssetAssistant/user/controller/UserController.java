@@ -1,9 +1,11 @@
 package kr.daeho.AssetAssistant.user.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;  
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import kr.daeho.AssetAssistant.user.dto.UserDto;
@@ -28,6 +30,8 @@ public class UserController {
     // 컨트롤러는 서비스(실제)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
     private final UserInterfaces userInterfaces;
 
+    // 생성자를 통한 의존성 주입 -> 의존성 역전 원칙 (불변성 보장, 필수 의존성 보장, 테스트 용이)
+    // 고수준 모듈(컨트롤러)이 저수준 모듈(서비스)에 직접 의존하지 않음 (인터페이스(계약)에 의존)
     @Autowired
     public UserController(UserInterfaces userInterfaces) {
         this.userInterfaces = userInterfaces;
@@ -40,5 +44,15 @@ public class UserController {
         UserDto userDto = userInterfaces.getUserInfo(userId);
         return userDto;
     }
-    
+
+    // 사용자 정보 등록
+    @PostMapping("/create")
+    public UserDto createUser(@RequestBody UserDto userDto) {
+        // 사용자 정보 등록 및 반환
+        UserDto createdUserDto = userInterfaces.createUser(userDto);
+        return createdUserDto;
+    }
+
+    // 사용자 정보 수정
+    // 사용자 정보 삭제
 }

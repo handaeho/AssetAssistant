@@ -1,10 +1,10 @@
-package kr.daeho.AssetAssistant.user.repository;
+package kr.daeho.AssetAssistant.assets.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import kr.daeho.AssetAssistant.user.entity.UserEntity;
+import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
 
 /**
- * 사용자 레파지토리
+ * 자산 레파지토리
  * 
  * 클라이언트 <-> 컨트롤러 <-> 인터페이스 <-> 서비스 <-> 레파지토리 <-> DB
  * 
@@ -14,10 +14,6 @@ import kr.daeho.AssetAssistant.user.entity.UserEntity;
  * DB 연산을 추상화하여 비즈니스 로직과 분리
  * 테스트 용이성 향상. DB 구현체 변경에 유연하게 대응 가능
  */
-public interface UserReposiory extends JpaRepository<UserEntity, Long> {
-    // 사용자 아이디로 DB에서 사용자 조회
-    public UserEntity findByUserId(String userId);
+public interface AssetsRepository extends JpaRepository<AssetsEntity, Long> {
 
-    // 사용자 아이디로 DB에서 사용자 삭제
-    public void deleteByUserId(String userId);
 }
