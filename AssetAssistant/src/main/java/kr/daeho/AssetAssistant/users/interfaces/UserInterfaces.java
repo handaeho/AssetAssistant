@@ -1,6 +1,6 @@
-package kr.daeho.AssetAssistant.user.interfaces;
+package kr.daeho.AssetAssistant.users.interfaces;
 
-import kr.daeho.AssetAssistant.user.dto.UserDto;
+import kr.daeho.AssetAssistant.users.dto.UserDto;
 
 /**
  * 사용자 인터페이스
@@ -19,10 +19,10 @@ public interface UserInterfaces {
     public UserDto getUserInfo(String userId);
 
     // 사용자 정보 등록
-    public UserDto createUser(UserDto userDto);
+    public UserDto createUser(String userId, UserDto userDto);
 
     // 사용자 정보 수정
-    public UserDto updateUser(UserDto userDto);
+    public UserDto updateUser(String userId, UserDto userDto);
 
     // 사용자 정보 삭제
     public void deleteUser(String userId);

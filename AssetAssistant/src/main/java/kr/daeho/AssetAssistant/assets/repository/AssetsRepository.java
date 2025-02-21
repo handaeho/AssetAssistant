@@ -2,6 +2,7 @@ package kr.daeho.AssetAssistant.assets.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
+import java.util.Optional;
 
 /**
  * 자산 레파지토리
@@ -15,5 +16,9 @@ import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
  * 테스트 용이성 향상. DB 구현체 변경에 유연하게 대응 가능
  */
 public interface AssetsRepository extends JpaRepository<AssetsEntity, Long> {
+    // 사용자 아이디로 자산 정보 검색
+    Optional<AssetsEntity> findByUserId(String userId);
 
+    // 사용자 아이디로 자산 정보 삭제
+    void deleteByUserId(String userId);
 }

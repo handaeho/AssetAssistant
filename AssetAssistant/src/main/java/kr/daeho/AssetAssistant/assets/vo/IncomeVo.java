@@ -25,10 +25,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IncomeVo {
-    // 수입 이름 (급여, 배당금 등)
+    // 수입 이름 (XX급여, XX배당금, XX이자 등)
     private String incomeName;
 
-    // 수입 타입 (정규직, 계약직, 프리랜서 등)
+    // 수입 타입 (급여, 배당금, 이자 등)
     private String incomeType;
 
     // 수입 금액 (원 단위)

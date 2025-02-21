@@ -19,10 +19,10 @@ public interface AssetsInterfaces {
     public AssetsDto getAssetsInfo(String userId);
 
     // 자산 정보 등록
-    public AssetsDto createAssets(AssetsDto assetsDto);
+    public AssetsDto createAssets(String userId, AssetsDto assetsDto);
 
     // 자산 정보 수정
-    public AssetsDto updateAssets(AssetsDto assetsDto);
+    public AssetsDto updateAssets(String userId, AssetsDto assetsDto);
 
     // 자산 정보 삭제
     public void deleteAssets(String userId);

@@ -1,7 +1,8 @@
-package kr.daeho.AssetAssistant.user.repository;
+package kr.daeho.AssetAssistant.users.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import kr.daeho.AssetAssistant.user.entity.UserEntity;
+
+import kr.daeho.AssetAssistant.users.entity.UserEntity;
 
 /**
  * 사용자 레파지토리

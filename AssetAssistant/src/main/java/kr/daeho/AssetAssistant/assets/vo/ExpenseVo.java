@@ -25,19 +25,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenseVo {
-    // 고정 지출 이름 (월세, 공과금 등)
+    // 고정 지출 이름 (XX월세, XX공과금, XX보험료 등)
     private String fixedExpenseName;
 
-    // 고정 지출 타입 (주거비, 공과금, 보험료 등)
+    // 고정 지출 타입 (월세, 공과금, 보험료 등)
     private String fixedExpenseType;
 
     // 고정 지출 금액
     private int fixedExpenseAmount;
 
-    // 변동 지출 이름 (여행, 취미 등)
+    // 변동 지출 이름 (XX여행, XX취미, XX쇼핑 등)
     private String variableExpenseName;
 
-    // 변동 지출 타입 (여가, 문화생활 등)
+    // 변동 지출 타입 (여행, 취미, 쇼핑 등)
     private String variableExpenseType;
 
     // 변동 지출 금액
