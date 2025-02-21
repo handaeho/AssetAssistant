@@ -1,5 +1,6 @@
 package kr.daeho.AssetAssistant.users.entity;
 
+import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,48 +39,129 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_user_id_users", columnList = "user_id")
 })
 public class UserEntity {
-    // 사용자 데이터 고유 식별자 (User DB의 PK)
+    /**
+     * 사용자 데이터 고유 식별자 (User DB의 PK)
+     * 
+     * @Id: 해당 필드가 테이블의 PK임을 명시
+     * @GeneratedValue: 기본 키 자동 생성 (GenerationType.IDENTITY: 기본 키 자동 생성)
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 사용자 아이디
+    /**
+     * 사용자 아이디
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     *          - unique: 유니크 제약 조건 여부
+     */
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId;
 
-    // 사용자 이름
+    /**
+     * 사용자 이름
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
     @Column(name = "user_name", nullable = false)
     private String userName;
 
-    // 사용자 비밀번호
+    /**
+     * 사용자 비밀번호
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
     @Column(name = "user_password", nullable = false)
     private String userPassword;
 
-    // 사용자 나이
+    /**
+     * 사용자 나이
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
     @Column(name = "user_age", nullable = true)
     private int userAge;
 
-    // 사용자 직업
+    /**
+     * 사용자 직업
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
     @Column(name = "user_job", nullable = true)
     private String userJob;
 
-    // 사용자 이름 정보 업데이트
+    /**
+     * 사용자 정보 생성일
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "user_created_at", nullable = false)
+    private LocalDateTime userCreatedAt;
+
+    /**
+     * 사용자 정보 수정일
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "user_updated_at", nullable = false)
+    private LocalDateTime userUpdatedAt;
+
+    /**
+     * 사용자 이름 정보 업데이트
+     * 
+     * @param userName: 업데이트할 사용자 이름
+     */
     public void updateUserName(String userName) {
         this.userName = userName;
     }
 
-    // 사용자 비밀번호 업데이트
+    /**
+     * 사용자 비밀번호 업데이트
+     * 
+     * @param userPassword: 업데이트할 사용자 비밀번호
+     */
     public void updateUserPassword(String userPassword) {
         this.userPassword = userPassword;
     }
 
-    // 사용자 나이 업데이트
+    /**
+     * 사용자 나이 업데이트
+     * 
+     * @param userAge: 업데이트할 사용자 나이
+     */
     public void updateUserAge(int userAge) {
         this.userAge = userAge;
     }
 
-    // 사용자 직업 업데이트
+    /**
+     * 사용자 직업 업데이트
+     * 
+     * @param userJob: 업데이트할 사용자 직업
+     */
     public void updateUserJob(String userJob) {
         this.userJob = userJob;
+    }
+
+    /**
+     * 사용자 정보 수정일 업데이트
+     * 
+     * @param userUpdatedAt: 업데이트할 사용자 정보 수정일
+     */
+    public void updateUserUpdatedAt(LocalDateTime userUpdatedAt) {
+        this.userUpdatedAt = userUpdatedAt;
     }
 }

@@ -33,7 +33,7 @@ public class AssetsDto {
     // DB에서 사용되는 고유식별자(ID)
     private Long id;
 
-    // 사용자 식별자
+    // 사용자 아이디 (식별자)
     private String userId;
 
     // 전체 자산 금액 (예: 100만원)
@@ -71,14 +71,14 @@ public class AssetsDto {
      */
     public AssetsEntity toAssetsEntity() {
         return AssetsEntity.builder()
-                .id(this.id)
-                .userId(this.userId)
-                .totalAssets(this.totalAssets)
-                .income(this.income)
-                .expense(this.expense)
-                .assetDetails(this.assetDetails)
-                .assetsTypeRatios(this.assetsTypeRatios)
-                .incomeExpenseRatio(this.incomeExpenseRatio)
+                .id(id) // DB에서 사용되는 고유식별자(ID)
+                .userId(userId) // 사용자 아이디
+                .totalAssets(totalAssets) // 전체 자산 금액
+                .income(income) // 수입 정보
+                .expense(expense) // 지출 정보
+                .assetDetails(assetDetails) // 여러 자산 상세 정보
+                .assetsTypeRatios(assetsTypeRatios) // 각 자산 타입별 비율
+                .incomeExpenseRatio(incomeExpenseRatio) // 수입 대비 지출 비율
                 .build();
     }
 
@@ -93,13 +93,13 @@ public class AssetsDto {
      */
     public static AssetsDto fromAssetsEntity(AssetsEntity entity) {
         return AssetsDto.builder()
-                .userId(entity.getUserId())
-                .totalAssets(entity.getTotalAssets())
-                .income(entity.getIncome())
-                .expense(entity.getExpense())
-                .assetDetails(entity.getAssetDetails())
-                .assetsTypeRatios(entity.getAssetsTypeRatios())
-                .incomeExpenseRatio(entity.getIncomeExpenseRatio())
+                .userId(entity.getUserId()) // 사용자 아이디
+                .totalAssets(entity.getTotalAssets()) // 전체 자산 금액
+                .income(entity.getIncome()) // 수입 정보
+                .expense(entity.getExpense()) // 지출 정보
+                .assetDetails(entity.getAssetDetails()) // 여러 자산 상세 정보
+                .assetsTypeRatios(entity.getAssetsTypeRatios()) // 각 자산 타입별 비율
+                .incomeExpenseRatio(entity.getIncomeExpenseRatio()) // 수입 대비 지출 비율
                 .build();
     }
 }

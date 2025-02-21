@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
  *                           (final 및 notNull 필드에 대한 생성자 자동 생성)
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
     // 인터페이스 선언 (final로 선언해 불변성 보장)

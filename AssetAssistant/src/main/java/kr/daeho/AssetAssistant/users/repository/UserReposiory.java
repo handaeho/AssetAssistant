@@ -1,7 +1,7 @@
 package kr.daeho.AssetAssistant.users.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import java.util.Optional;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 
 /**
@@ -17,8 +17,8 @@ import kr.daeho.AssetAssistant.users.entity.UserEntity;
  */
 public interface UserReposiory extends JpaRepository<UserEntity, Long> {
     // 사용자 아이디로 DB에서 사용자 조회
-    public UserEntity findByUserId(String userId);
+    Optional<UserEntity> findByUserId(String userId);
 
     // 사용자 아이디로 DB에서 사용자 삭제
-    public void deleteByUserId(String userId);
+    void deleteByUserId(String userId);
 }

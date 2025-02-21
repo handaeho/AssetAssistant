@@ -1,14 +1,15 @@
 package kr.daeho.AssetAssistant.users.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
-import kr.daeho.AssetAssistant.users.exception.UserException;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
 import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.exceptions.ApplicationExceptions;
 
 /**
  * 사용자 서비스
@@ -26,15 +27,24 @@ import kr.daeho.AssetAssistant.users.repository.UserReposiory;
  * @Service: 서비스 클래스임을 명시
  * @RequiredArgsConstructor: 생성자 주입 방식을 사용하기 위한 어노테이션 (@Autowired 대신 사용)
  *                           (final 및 notNull 필드에 대한 생성자 자동 생성)
+ * @Slf4j: 로깅을 위한 어노테이션
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService implements UserInterfaces {
     // 사용자 리포지토리 선언
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final UserReposiory userReposiory;
 
-    // 사용자 정보 조회
+    /**
+     * 사용자 정보 조회
+     *
+     * @param userId 조회할 사용자의 아이디
+     * @return UserDto 변환된 사용자 정보 객체
+     * @throws IllegalArgumentException 만약 userId가 null 또는 빈 문자열이면 발생
+     * @throws ApplicationExceptions    사용자를 찾지 못하거나 조회 중 예외 발생 시 발생
+     */
     @Override
     @Transactional(readOnly = true)
     public UserDto getUserInfo(String userId) {
@@ -43,19 +53,24 @@ public class UserService implements UserInterfaces {
         }
         try {
             // DB에서 사용자 검색 후, Entity 객체로 불러오기
-            UserEntity userEntity = userReposiory.findByUserId(userId);
-            // 사용자 아이디에 해당하는 정보가 없으면 예외 발생
-            if (userEntity == null) {
-                throw new IllegalArgumentException("헤당 정보를 찾을 수 없습니다.");
-            }
+            UserEntity userEntity = userReposiory.findByUserId(userId)
+                    .orElseThrow(() -> new ApplicationExceptions("USER_NOT_FOUND", "해당 사용자 정보를 찾을 수 없습니다: " + userId));
             // Entity 객체를 Dto 객체로 변환하여 반환
             return UserDto.fromUserEntity(userEntity);
         } catch (Exception e) {
-            throw new UserException("USER_NOT_FOUND", "사용자 정보 조회 실패", e);
+            throw new ApplicationExceptions("USER_NOT_FOUND", "사용자 정보 조회 실패", e);
         }
     }
 
-    // 사용자 정보 등록
+    /**
+     * 사용자 정보 등록
+     *
+     * @param userId  등록할 사용자의 아이디
+     * @param userDto 등록할 사용자 정보가 담긴 DTO 객체
+     * @return UserDto 저장된 사용자 정보 반환 (필요한 정보만 포함)
+     * @throws IllegalArgumentException 만약 userId 또는 userDto가 null/빈값이면 발생
+     * @throws ApplicationExceptions    등록 중 예외 발생 시 발생
+     */
     @Override
     @Transactional
     public UserDto createUser(String userId, UserDto userDto) {
@@ -76,14 +91,22 @@ public class UserService implements UserInterfaces {
                     .build();
             // 변환된 Entity 객체를 DB에 저장
             UserEntity savedUserEntity = userReposiory.save(userEntity);
-            // 저장된 Entity 객체를 Dto 객체로 변환하여 반환 -> Entity의 세부 내용 노출 x. 필요한 정보만 반환
+            // 저장된 Entity 객체를 Dto 객체로 변환하여 반환 (Entity의 세부 정보를 노출하지 않도록 필요한 정보만 반환)
             return UserDto.fromUserEntity(savedUserEntity);
         } catch (Exception e) {
-            throw new UserException("USER_CREATE_FAILED", "사용자 정보 등록 실패", e);
+            throw new ApplicationExceptions("USER_CREATE_FAILED", "사용자 정보 등록 실패", e);
         }
     }
 
-    // 사용자 정보 수정
+    /**
+     * 사용자 정보 수정
+     *
+     * @param userId  수정할 사용자의 아이디 (경로 변수 혹은 파라미터로 전달됩니다.)
+     * @param userDto 수정할 사용자 정보가 담긴 DTO 객체
+     * @return UserDto 수정된 사용자 정보 반환
+     * @throws IllegalArgumentException 만약 userId 또는 userDto가 null/빈값이면 발생
+     * @throws ApplicationExceptions    수정 중 예외 발생 시 발생
+     */
     @Override
     @Transactional
     public UserDto updateUser(String userId, UserDto userDto) {
@@ -94,27 +117,31 @@ public class UserService implements UserInterfaces {
             throw new IllegalArgumentException("사용자 정보를 입력해 주세요.");
         }
         try {
-            // DB에서 사용자 검색 후, Entity 객체로 불러오기
-            UserEntity userEntity = userReposiory.findByUserId(userDto.getUserId());
-            // 사용자 아이디에 해당하는 정보가 없으면 예외 발생
-            if (userEntity == null) {
-                throw new IllegalArgumentException("해당 정보를 찾을 수 없습니다.");
-            }
-            // 입력받은 Dto 객체를 통해 Entity 객체의 사용자 정보 수정
-            userEntity.updateUserName(userDto.getUserName());
-            userEntity.updateUserPassword(userDto.getUserPassword());
-            userEntity.updateUserAge(userDto.getUserAge());
-            userEntity.updateUserJob(userDto.getUserJob());
+            // DB에서 사용자 검색 후, Entity 객체를 파라미터로 전달된 userId를 기준으로 조회
+            UserEntity existingUser = userReposiory.findByUserId(userId)
+                    .orElseThrow(() -> new ApplicationExceptions("USER_NOT_FOUND", "해당 사용자 정보를 찾을 수 없습니다."));
+            // 입력받은 Dto 객체의 정보를 바탕으로 Entity 객체의 사용자 정보 수정
+            existingUser.updateUserName(userDto.getUserName());
+            existingUser.updateUserPassword(userDto.getUserPassword());
+            existingUser.updateUserAge(userDto.getUserAge());
+            existingUser.updateUserJob(userDto.getUserJob());
             // 수정된 Entity 객체를 DB에 저장
-            UserEntity updatedUserEntity = userReposiory.save(userEntity);
+            UserEntity updatedUserEntity = userReposiory.save(existingUser);
             // 수정된 Entity 객체를 Dto 객체로 변환하여 반환
             return UserDto.fromUserEntity(updatedUserEntity);
         } catch (Exception e) {
-            throw new UserException("USER_UPDATE_FAILED", "사용자 정보 수정 실패", e);
+            // 수정 중 발생한 예외를 통합 예외로 래핑하여 throw
+            throw new ApplicationExceptions("USER_UPDATE_FAILED", "사용자 정보 수정 실패", e);
         }
     }
 
-    // 사용자 정보 삭제
+    /**
+     * 사용자 정보 삭제
+     *
+     * @param userId 삭제할 사용자의 아이디
+     * @throws IllegalArgumentException 만약 userId가 null 또는 빈 문자열이면 발생
+     * @throws ApplicationExceptions    삭제 중 예외 발생 시 발생
+     */
     @Override
     @Transactional
     public void deleteUser(String userId) {
@@ -122,11 +149,10 @@ public class UserService implements UserInterfaces {
             throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
         }
         try {
-            // DB에서 사용자 아이디로 검색 후, 해당 내용 삭제
+            // DB에서 사용자 아이디를 기준으로 삭제 수행
             userReposiory.deleteByUserId(userId);
         } catch (Exception e) {
-            throw new UserException("USER_DELETE_FAILED", "사용자 정보 삭제 실패", e);
+            throw new ApplicationExceptions("USER_DELETE_FAILED", "사용자 정보 삭제 실패", e);
         }
     }
-
 }

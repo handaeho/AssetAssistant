@@ -2,11 +2,9 @@ package kr.daeho.AssetAssistant.assets.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,10 +13,10 @@ import kr.daeho.AssetAssistant.assets.dto.AssetsDto;
 import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
 import kr.daeho.AssetAssistant.assets.interfaces.AssetsInterfaces;
 import kr.daeho.AssetAssistant.assets.repository.AssetsRepository;
-import kr.daeho.AssetAssistant.assets.exception.AssetsException;
 import kr.daeho.AssetAssistant.assets.vo.IncomeVo;
 import kr.daeho.AssetAssistant.assets.vo.ExpenseVo;
 import kr.daeho.AssetAssistant.assets.vo.AssetsDetailVo;
+import kr.daeho.AssetAssistant.exceptions.ApplicationExceptions;
 
 /**
  * 자산 관리 서비스 클래스
@@ -60,12 +58,12 @@ public class AssetsService implements AssetsInterfaces {
             log.info("Fetching assets info for user: {}", userId);
             // DB에서 사용자 아이디로 자산 정보 검색 후, Entity 객체로 불러오기
             AssetsEntity assetsEntity = assetsRepository.findByUserId(userId)
-                    .orElseThrow(() -> new AssetsException.AssetNotFoundException("자산 정보를 찾을 수 없습니다: " + userId));
+                    .orElseThrow(() -> new ApplicationExceptions.NotFoundException("자산 정보를 찾을 수 없습니다: " + userId));
             // Entity 객체를 Dto 객체로 변환하여 반환
             return AssetsDto.fromAssetsEntity(assetsEntity);
         } catch (Exception e) {
             log.error("Failed to fetch assets info for user: {}", userId, e);
-            throw new AssetsException("ASSETS_NOT_FOUND", "자산 정보 조회 실패", e);
+            throw new ApplicationExceptions("ASSETS_NOT_FOUND", "자산 정보 조회 실패", e);
         }
     }
 
@@ -83,7 +81,7 @@ public class AssetsService implements AssetsInterfaces {
         try {
             // 입력받은 Dto 객체를 Entity 객체로 변환
             AssetsEntity assetsEntity = AssetsEntity.builder()
-                    .userId(assetsDto.getUserId())
+                    .userId(userId)
                     .totalAssets(assetsDto.getTotalAssets())
                     .income(assetsDto.getIncome())
                     .expense(assetsDto.getExpense())
@@ -96,7 +94,7 @@ public class AssetsService implements AssetsInterfaces {
             // 저장된 Entity 객체를 Dto 객체로 변환하여 반환 -> Entity의 세부 내용 노출 x. 필요한 정보만 반환
             return AssetsDto.fromAssetsEntity(savedAssetsEntity);
         } catch (Exception e) {
-            throw new AssetsException("ASSETS_CREATE_FAILED", "자산 정보 등록 실패", e);
+            throw new ApplicationExceptions("ASSETS_CREATE_FAILED", "자산 정보 등록 실패", e);
         }
     }
 
@@ -109,15 +107,16 @@ public class AssetsService implements AssetsInterfaces {
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public AssetsDto updateAssets(String userId, AssetsDto assetsDto) {
+        validateUserId(userId);
         validateAssetData(userId, assetsDto);
         try {
             // DB에서 사용자 아이디로 자산 정보 검색 후, Entity 객체로 불러오기
             AssetsEntity assetsEntity = assetsRepository.findByUserId(userId)
-                    .orElseThrow(() -> new AssetsException.AssetNotFoundException("자산 정보를 찾을 수 없습니다: " + userId));
+                    .orElseThrow(() -> new ApplicationExceptions.NotFoundException("자산 정보를 찾을 수 없습니다: " + userId));
 
             // 사용자 입력 받은 DTO 객체를 통해 Entity 객체 업데이트
-            Map<String, Double> assetsTypeRatios = updateEntityFromDto(assetsEntity, assetsDto);
-            assetsEntity.updateAssetsTypeRatios(assetsTypeRatios);
+            Map<String, Double> updatedTypeRatios = updateEntityFromDto(assetsEntity, assetsDto);
+            assetsEntity.updateAssetsTypeRatios(updatedTypeRatios);
 
             // DB에 수정된 Entity 객체 저장
             AssetsEntity updatedEntity = assetsRepository.save(assetsEntity);
@@ -125,7 +124,7 @@ public class AssetsService implements AssetsInterfaces {
             return AssetsDto.fromAssetsEntity(updatedEntity);
         } catch (Exception e) {
             log.error("Failed to update assets for user: {}", userId, e);
-            throw new AssetsException("ASSETS_UPDATE_FAILED", "자산 정보 수정 실패", e);
+            throw new ApplicationExceptions("ASSETS_UPDATE_FAILED", "자산 정보 수정 실패", e);
         }
     }
 
@@ -143,7 +142,7 @@ public class AssetsService implements AssetsInterfaces {
             // DB에서 사용자 아이디로 자산 정보 검색 후, 해당 내용 삭제
             assetsRepository.deleteByUserId(userId);
         } catch (Exception e) {
-            throw new AssetsException("ASSETS_DELETE_FAILED", "자산 정보 삭제 실패", e);
+            throw new ApplicationExceptions("ASSETS_DELETE_FAILED", "자산 정보 삭제 실패", e);
         }
     }
 
