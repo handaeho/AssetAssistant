@@ -1,10 +1,13 @@
 package kr.daeho.AssetAssistant.users.dto;
 
-import kr.daeho.AssetAssistant.users.entity.UserEntity;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import kr.daeho.AssetAssistant.users.entity.UserEntity;
 
 /**
  * 사용자 정보 DTO
@@ -29,12 +32,18 @@ public class UserDto {
     private Long id;
 
     // 사용자 아이디 (식별자)
+    @NotBlank(message = "사용자 아이디 - 필수 항목")
+    @Size(min = 4, max = 16, message = "사용자 아이디 - 4자 이상 16자 이하")
     private String userId;
 
     // 사용자 이름
+    @NotBlank(message = "사용자 이름 - 필수 항목")
+    @Size(min = 2, max = 10, message = "사용자 이름 - 2자 이상 10자 이하")
     private String userName;
 
     // 사용자 비밀번호
+    @NotBlank(message = "사용자 비밀번호 - 필수 항목")
+    @Size(min = 4, max = 16, message = "사용자 비밀번호 - 4자 이상 16자 이하")
     private String userPassword;
 
     // 사용자 나이
@@ -76,7 +85,6 @@ public class UserDto {
         return UserDto.builder()
                 .userId(userEntity.getUserId()) // 사용자 아이디
                 .userName(userEntity.getUserName()) // 사용자 이름
-                .userPassword(userEntity.getUserPassword()) // 사용자 비밀번호
                 .userAge(userEntity.getUserAge()) // 사용자 나이
                 .userJob(userEntity.getUserJob()) // 사용자 직업
                 .build();

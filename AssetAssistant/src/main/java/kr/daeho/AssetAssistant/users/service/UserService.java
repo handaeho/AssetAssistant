@@ -2,8 +2,10 @@ package kr.daeho.AssetAssistant.users.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
@@ -37,6 +39,10 @@ public class UserService implements UserInterfaces {
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final UserReposiory userReposiory;
 
+    // SecurityConfig에서 @Bean으로 설정한 PasswordEncoder 빈 주입
+    // 애플리케이션 전반에서 동일한 인스턴스를 사용 보장 (일관성 유지)
+    private final PasswordEncoder passwordEncoder;
+
     /**
      * 사용자 정보 조회
      *
@@ -62,35 +68,39 @@ public class UserService implements UserInterfaces {
         }
     }
 
+    // TODO: 삭제
     /**
-     * 사용자 정보 등록
+     * 사용자 등록
      *
-     * @param userId  등록할 사용자의 아이디
      * @param userDto 등록할 사용자 정보가 담긴 DTO 객체
      * @return UserDto 저장된 사용자 정보 반환 (필요한 정보만 포함)
-     * @throws IllegalArgumentException 만약 userId 또는 userDto가 null/빈값이면 발생
+     * @throws IllegalArgumentException 만약 userDto가 null/빈값이면 발생
      * @throws ApplicationExceptions    등록 중 예외 발생 시 발생
      */
     @Override
     @Transactional
-    public UserDto createUser(String userId, UserDto userDto) {
-        if (userId == null || userId.isEmpty()) {
-            throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
+    public UserDto createUser(UserDto userDto) {
+        // 사용자 아이디 중복 체크
+        if (userReposiory.existsByUserId(userDto.getUserId())) {
+            throw new ApplicationExceptions("USER_ALREADY_EXISTS", "이미 존재하는 아이디입니다.");
         }
-        if (userDto == null) {
-            throw new IllegalArgumentException("사용자 정보를 입력해 주세요.");
-        }
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(userDto.getUserPassword());
+
         try {
-            // 입력받은 Dto 객체를 Entity 객체로 변환
+            // 입력받은 Dto 객체와 암호화 된 비밀번호를 Entity 객체로 변환
             UserEntity userEntity = UserEntity.builder()
                     .userId(userDto.getUserId())
                     .userName(userDto.getUserName())
-                    .userPassword(userDto.getUserPassword())
+                    .userPassword(encodedPassword)
                     .userAge(userDto.getUserAge())
                     .userJob(userDto.getUserJob())
                     .build();
+
             // 변환된 Entity 객체를 DB에 저장
             UserEntity savedUserEntity = userReposiory.save(userEntity);
+
             // 저장된 Entity 객체를 Dto 객체로 변환하여 반환 (Entity의 세부 정보를 노출하지 않도록 필요한 정보만 반환)
             return UserDto.fromUserEntity(savedUserEntity);
         } catch (Exception e) {

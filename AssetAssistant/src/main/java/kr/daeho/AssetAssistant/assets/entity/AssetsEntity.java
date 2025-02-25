@@ -130,6 +130,9 @@ public class AssetsEntity {
      * @Column: Map의 value에 대한 컬럼 지정
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
+
+    // TODO: 여기 어노테이션들 모두 자세하게 파악하기
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "assets_type_ratios", joinColumns = @JoinColumn(name = "assets_id"))
     @MapKeyColumn(name = "asset_type")
@@ -149,10 +152,16 @@ public class AssetsEntity {
      *                   - joinColumns: 외래 키로 사용할 컬럼 지정
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
+
+    // TODO: 여기 어노테이션들 모두 자세하게 파악하기
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "assets_details", joinColumns = @JoinColumn(name = "assets_id"))
     @Builder.Default
     private List<AssetsDetailVo> assetDetails = new ArrayList<>();
+
+    // TODO: 자산 정보 생성일 작성
+    // TODO: 자산 정보 수정일 작성
 
     // 업데이트
     // 엔티티에서 선언한 객체 업데이트 메소드 (불변 객체가 아니므로, 바로 해당 값을 전달해 업데이트)

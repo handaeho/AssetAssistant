@@ -2,13 +2,17 @@ package kr.daeho.AssetAssistant.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import lombok.Getter;
 
+@Getter
 public class ApplicationExceptions extends RuntimeException {
-    // 예외를 식별하기 위한 에러 코드 (예: USER_NOT_FOUND, ASSETS_NOT_FOUND 등)
+    /**
+     * 에러 코드 (ex: "USER_NOT_FOUND", "AUTHENTICATION_FAILED" 등)
+     */
     private final String errorCode;
 
     /**
-     * 에러 코드와 메시지를 이용하여 ApplicationException을 생성합니다.
+     * 에러 코드와 메시지를 이용하여 ApplicationException을 생성
      *
      * @param errorCode 예외 식별을 위한 에러 코드
      * @param message   상세 예외 메시지
@@ -19,7 +23,7 @@ public class ApplicationExceptions extends RuntimeException {
     }
 
     /**
-     * 에러 코드, 메시지, 그리고 원인 예외를 이용하여 ApplicationException을 생성합니다.
+     * 에러 코드, 메시지, 그리고 원인 예외를 이용하여 ApplicationException을 생성
      *
      * @param errorCode 예외 식별을 위한 에러 코드
      * @param message   상세 예외 메시지

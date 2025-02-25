@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.CreationTimestamp;
 
 /**
  * 사용자 정보 Entity
@@ -103,20 +105,24 @@ public class UserEntity {
     /**
      * 사용자 정보 생성일
      * 
+     * @CreationTimestamp: 엔티티 생성 시 자동으로 생성일 업데이트
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
+    @CreationTimestamp
     @Column(name = "user_created_at", nullable = false)
     private LocalDateTime userCreatedAt;
 
     /**
      * 사용자 정보 수정일
      * 
+     * @UpdateTimestamp: 엔티티 수정 시 자동으로 수정일 업데이트
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
+    @UpdateTimestamp
     @Column(name = "user_updated_at", nullable = false)
     private LocalDateTime userUpdatedAt;
 
@@ -154,14 +160,5 @@ public class UserEntity {
      */
     public void updateUserJob(String userJob) {
         this.userJob = userJob;
-    }
-
-    /**
-     * 사용자 정보 수정일 업데이트
-     * 
-     * @param userUpdatedAt: 업데이트할 사용자 정보 수정일
-     */
-    public void updateUserUpdatedAt(LocalDateTime userUpdatedAt) {
-        this.userUpdatedAt = userUpdatedAt;
     }
 }

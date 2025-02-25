@@ -1,11 +1,13 @@
 package kr.daeho.AssetAssistant.users.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
-import lombok.RequiredArgsConstructor;
 
 /**
  * 사용자 컨트롤러
@@ -51,15 +53,15 @@ public class UserController {
     }
 
     // 사용자 정보 등록
-    @PostMapping("/create/{userId}")
-    public ResponseEntity<UserDto> createUser(@RequestParam String userId, @RequestBody UserDto userDto) {
+    @PostMapping("/create")
+    public ResponseEntity<UserDto> createUser(@RequestBody @Validated UserDto userDto) {
         // userId를 통해 사용자 정보 등록 및 반환
-        UserDto createdUserDto = userInterfaces.createUser(userId, userDto);
-        if (userId == null || userDto == null) {
+        UserDto createdUserDto = userInterfaces.createUser(userDto);
+        if (createdUserDto == null) {
             // 잘못된 정보가 입력된 경우 404 응답
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(createdUserDto);
+        return new ResponseEntity<>(createdUserDto, HttpStatus.CREATED);
     }
 
     // 사용자 정보 수정

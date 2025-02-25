@@ -10,8 +10,11 @@ import kr.daeho.AssetAssistant.users.dto.UserDto;
  * 클라이언트 <-> 컨트롤러 <-> 인터페이스 <-> 서비스 <-> 레포지토리 <-> DB
  * 
  * 추상화: 구현 세부사항은 감추고 어떤 기능을 제공하는 지에 대해만 정의
+ * 
  * 다형성: 서로 다른 클래스가 같은 인터페이스를 상속받아 동일한 동작을 구현 가능
+ * 
  * 느슨한 결합: 실제로 기능을 구현하는 클래스에 의존하지 않고, 인터페이스에 의존해 유연성 확보
+ * 
  * 역할 분리: 클라이언트는 컨트롤러 및 인터페이스와 소통하고, 내부 서비스에 접근하지 않아도 됨
  */
 public interface UserInterfaces {
@@ -19,7 +22,7 @@ public interface UserInterfaces {
     public UserDto getUserInfo(String userId);
 
     // 사용자 정보 등록
-    public UserDto createUser(String userId, UserDto userDto);
+    public UserDto createUser(UserDto userDto);
 
     // 사용자 정보 수정
     public UserDto updateUser(String userId, UserDto userDto);
