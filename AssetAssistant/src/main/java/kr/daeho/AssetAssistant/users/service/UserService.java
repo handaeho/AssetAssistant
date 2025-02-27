@@ -1,6 +1,5 @@
 package kr.daeho.AssetAssistant.users.service;
 
-import java.time.LocalDateTime;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
