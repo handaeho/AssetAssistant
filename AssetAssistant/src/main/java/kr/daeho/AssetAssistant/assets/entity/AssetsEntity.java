@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 import kr.daeho.AssetAssistant.assets.vo.*;
 
@@ -160,8 +161,25 @@ public class AssetsEntity {
     @Builder.Default
     private List<AssetsDetailVo> assetDetails = new ArrayList<>();
 
-    // TODO: 자산 정보 생성일 작성
-    // TODO: 자산 정보 수정일 작성
+    /**
+     * 자산 정보 생성일
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    /**
+     * 자산 정보 수정일
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     // 업데이트
     // 엔티티에서 선언한 객체 업데이트 메소드 (불변 객체가 아니므로, 바로 해당 값을 전달해 업데이트)

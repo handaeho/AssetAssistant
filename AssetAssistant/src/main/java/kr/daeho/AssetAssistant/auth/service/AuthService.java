@@ -87,7 +87,7 @@ public class AuthService {
 
             // 1. 인증 객체 생성 및 인증 처리
             // 인증 정보 생성 -> Authentication 인터페이스를 구현, 사용자 인증정보 저장
-            // 사용자의 아이디와 비밀번호를 통해 인증 토큰 객체 생성
+            // loginRequestDto에 있는 사용자의 아이디와 비밀번호를 통해 인증 토큰 객체 생성
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequestDto.getUserId(),

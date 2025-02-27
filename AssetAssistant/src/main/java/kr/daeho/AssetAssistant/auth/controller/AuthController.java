@@ -49,6 +49,7 @@ public class AuthController extends BaseController {
         log.info("로그인 요청: {}", loginRequestDto.getUserId());
 
         // [인증 과정 3-16단계]: 로그인 처리 및 JWT 토큰 발급 (예외 발생 시 GlobalExceptionHandler로 전파)
+        // loginRequestDto로 받은 아이디, 비밀번호 검증 후, JWT 토큰 발급
         String token = authService.login(loginRequestDto);
 
         // [인증 과정 14단계]: 클라이언트에게 JWT 토큰 전달 (DTO 객체 사용)

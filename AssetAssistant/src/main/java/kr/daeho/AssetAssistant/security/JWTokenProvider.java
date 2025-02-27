@@ -56,6 +56,17 @@ public class JWTokenProvider {
     private final long tokenValidityInMilliseconds;
     private final UserDetailsService userDetailsService;
 
+    /**
+     * 생성자 주입 방식으로 JWTokenProvider 의존성 주입
+     * 
+     * @Value: 프로퍼티 값 주입 어노테이션
+     *         - properties, yml 등 설정 파일에서 정의한 값을 불러옴 (민감한 값, 자주 바뀌는 값 등)
+     *         - 하드코딩으로 매번 값을 입력하는 것보다 설정 파일에 정의하고 사용하는 것이 관리하기 좋음
+     * 
+     * @param secretKey              시크릿 키 값
+     * @param tokenValidityInSeconds 토큰 유효 기간
+     * @param userDetailsService     사용자 정보 서비스
+     */
     public JWTokenProvider(
             @Value("${jwt.secret-key}") String secretKey,
             @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds,
