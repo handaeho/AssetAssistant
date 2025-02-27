@@ -11,8 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import kr.daeho.AssetAssistant.users.entity.UserEntity;
-import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
+import kr.daeho.AssetAssistant.auth.repository.AuthRepository;
 
 /**
  * SecurityUserDetailsService 클래스는 스프링 시큐리티의 UserDetailsService(인터페이스)를 구현함
@@ -42,8 +42,8 @@ import kr.daeho.AssetAssistant.users.repository.UserReposiory;
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityUserDetailService implements UserDetailsService {
-    // 사용자 정보 조회를 위한 리포지토리 주입
-    private final UserReposiory userReposiory;
+    // 사용자 인증 정보 조회를 위한 리포지토리 주입
+    private final AuthRepository authRepository;
 
     /**
      * 사용자 정보 조회
@@ -67,15 +67,15 @@ public class SecurityUserDetailService implements UserDetailsService {
         log.info("사용자 정보 로드 시작: {}", userId);
 
         // 사용자 아이디를 기반으로 DB에서 사용자 상세 정보 조회
-        UserEntity userEntity = userReposiory.findByUserId(userId)
+        AuthEntity authEntity = authRepository.findByUserId(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾을 수 없습니다: " + userId));
 
         log.debug("사용자 정보 로드 완료: {}", userId);
 
         // 조회된 사용자 정보를 기반으로 UserDetails 객체 생성 및 반환
         return new User(
-                userEntity.getUserId(), // 사용자 이름(아이디)
-                userEntity.getUserPassword(), // 사용자 비밀번호
+                authEntity.getUserId(), // 사용자 이름(아이디)
+                authEntity.getUserPassword(), // 사용자 비밀번호
                 // Collections.singletonList(): 단 하나의 요소만 가지는 불변 리스트 (리스트 사이즈가 1로 고정, 변경 불가)
                 // SimpleGrantedAuthority(): 사용자 권한 정보를 가지는 객체
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))); // 사용자 권한

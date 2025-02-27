@@ -1,20 +1,24 @@
 package kr.daeho.AssetAssistant.users.service;
 
+import java.time.LocalDateTime;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
+import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
+import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
+import kr.daeho.AssetAssistant.auth.repository.AuthRepository;
+import kr.daeho.AssetAssistant.common.exception.ApplicationExceptions;
+import kr.daeho.AssetAssistant.common.util.ModelMapper;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
 import kr.daeho.AssetAssistant.users.repository.UserReposiory;
-import kr.daeho.AssetAssistant.exceptions.ApplicationExceptions;
 
 /**
- * 사용자 서비스
+ * 사용자 관리 서비스 -> 사용자 등록(회원가입), 조회, 수정, 삭제 기능 담당
  * 
  * 사용자 정보를 조회, 등록, 수정, 삭제하는 기능을 제공
  * 
@@ -35,134 +39,172 @@ import kr.daeho.AssetAssistant.exceptions.ApplicationExceptions;
 @RequiredArgsConstructor
 @Slf4j
 public class UserService implements UserInterfaces {
-    // 사용자 리포지토리 선언
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
-    private final UserReposiory userReposiory;
-
-    // SecurityConfig에서 @Bean으로 설정한 PasswordEncoder 빈 주입
-    // 애플리케이션 전반에서 동일한 인스턴스를 사용 보장 (일관성 유지)
-    private final PasswordEncoder passwordEncoder;
+    private final UserReposiory userRepository; // 사용자 정보 저장을 위한 리포지토리
+    private final AuthRepository authRepository; // 인증 정보 저장을 위한 리포지토리
+    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화 및 일치 확인 등
+    private final ModelMapper modelMapper; // DTO와 Entity 간 변환 처리
 
     /**
-     * 사용자 정보 조회
-     *
-     * @param userId 조회할 사용자의 아이디
-     * @return UserDto 변환된 사용자 정보 객체
-     * @throws IllegalArgumentException 만약 userId가 null 또는 빈 문자열이면 발생
-     * @throws ApplicationExceptions    사용자를 찾지 못하거나 조회 중 예외 발생 시 발생
+     * 회원가입 처리 -> 사용자 기본 정보와 인증 정보를 함께 저장
+     * 
+     * @param signUpRequestDto 회원가입 요청 정보
+     * @throws ApplicationExceptions.UserAlreadyExistsException 아이디 중복 시
      */
-    @Override
-    @Transactional(readOnly = true)
-    public UserDto getUserInfo(String userId) {
-        if (userId == null || userId.isEmpty()) {
-            throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
+    @Transactional
+    public UserDto signUp(SignUpRequestDto signUpRequestDto) {
+        log.info("회원가입 처리: {}", signUpRequestDto.getUserId());
+
+        String userId = signUpRequestDto.getUserId();
+
+        // 아이디 중복 검사 - 중복 시 UserAlreadyExistsException 발생
+        if (authRepository.existsByUserId(userId)) {
+            log.warn("아이디 중복: {}", userId);
+            throw new ApplicationExceptions.UserAlreadyExistsException(userId);
         }
+
+        // 2. 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
+
         try {
-            // DB에서 사용자 검색 후, Entity 객체로 불러오기
-            UserEntity userEntity = userReposiory.findByUserId(userId)
-                    .orElseThrow(() -> new ApplicationExceptions("USER_NOT_FOUND", "해당 사용자 정보를 찾을 수 없습니다: " + userId));
-            // Entity 객체를 Dto 객체로 변환하여 반환
-            return UserDto.fromUserEntity(userEntity);
+            // 1. 인증 정보 저장 (비밀번호 관련 정보는 AuthEntity에만 저장)
+            // ModelMapper를 사용하여 SignUpRequestDto → AuthEntity 변환
+            AuthEntity authEntity = modelMapper.signUpRequestToAuthEntity(signUpRequestDto, encodedPassword);
+            authRepository.save(authEntity);
+
+            // 2. 사용자 프로필 정보 저장 (UserEntity에는 비밀번호 없음)
+            // ModelMapper를 사용하여 SignUpRequestDto → UserEntity 변환
+            UserEntity userEntity = modelMapper.signUpRequestToUserEntity(signUpRequestDto);
+            userRepository.save(userEntity);
+
+            log.info("회원가입 완료: {}", userId);
+
+            // ModelMapper를 사용하여 UserEntity → UserDto 변환 및 리턴
+            return modelMapper.toUserDto(userEntity);
         } catch (Exception e) {
-            throw new ApplicationExceptions("USER_NOT_FOUND", "사용자 정보 조회 실패", e);
+            // DB 저장 실패 등 기술적 예외 발생 시
+            log.error("회원가입 처리 중 오류 발생: {}", e.getMessage(), e);
+            throw new ApplicationExceptions("USER_REGISTRATION_FAILED",
+                    "회원가입 처리 중 오류가 발생했습니다", e);
         }
     }
 
-    // TODO: 삭제
     /**
-     * 사용자 등록
-     *
-     * @param userDto 등록할 사용자 정보가 담긴 DTO 객체
-     * @return UserDto 저장된 사용자 정보 반환 (필요한 정보만 포함)
-     * @throws IllegalArgumentException 만약 userDto가 null/빈값이면 발생
-     * @throws ApplicationExceptions    등록 중 예외 발생 시 발생
+     * 사용자 정보 조회
+     * 
+     * @param userId 사용자 아이디
+     * @return 사용자 정보 DTO
+     * @throws ApplicationExceptions.UserNotFoundException 사용자를 찾을 수 없는 경우
      */
     @Override
-    @Transactional
-    public UserDto createUser(UserDto userDto) {
-        // 사용자 아이디 중복 체크
-        if (userReposiory.existsByUserId(userDto.getUserId())) {
-            throw new ApplicationExceptions("USER_ALREADY_EXISTS", "이미 존재하는 아이디입니다.");
-        }
+    public UserDto getUserInfo(String userId) {
+        log.info("사용자 정보 조회: {}", userId);
 
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(userDto.getUserPassword());
+        // 사용자 정보 조회 - 없으면 UserNotFoundException 발생
+        UserEntity userEntity = userRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    log.warn("사용자를 찾을 수 없음: {}", userId);
+                    return new ApplicationExceptions.UserNotFoundException(userId);
+                });
 
-        try {
-            // 입력받은 Dto 객체와 암호화 된 비밀번호를 Entity 객체로 변환
-            UserEntity userEntity = UserEntity.builder()
-                    .userId(userDto.getUserId())
-                    .userName(userDto.getUserName())
-                    .userPassword(encodedPassword)
-                    .userAge(userDto.getUserAge())
-                    .userJob(userDto.getUserJob())
-                    .build();
-
-            // 변환된 Entity 객체를 DB에 저장
-            UserEntity savedUserEntity = userReposiory.save(userEntity);
-
-            // 저장된 Entity 객체를 Dto 객체로 변환하여 반환 (Entity의 세부 정보를 노출하지 않도록 필요한 정보만 반환)
-            return UserDto.fromUserEntity(savedUserEntity);
-        } catch (Exception e) {
-            throw new ApplicationExceptions("USER_CREATE_FAILED", "사용자 정보 등록 실패", e);
-        }
+        // Entity를 DTO로 변환하여 반환
+        return modelMapper.toUserDto(userEntity);
     }
 
     /**
      * 사용자 정보 수정
-     *
-     * @param userId  수정할 사용자의 아이디 (경로 변수 혹은 파라미터로 전달됩니다.)
-     * @param userDto 수정할 사용자 정보가 담긴 DTO 객체
-     * @return UserDto 수정된 사용자 정보 반환
-     * @throws IllegalArgumentException 만약 userId 또는 userDto가 null/빈값이면 발생
-     * @throws ApplicationExceptions    수정 중 예외 발생 시 발생
+     * 
+     * @param userId  사용자 아이디
+     * @param userDto 수정할 사용자 정보
+     * @return 수정된 사용자 정보 DTO
+     * @throws ApplicationExceptions.UserNotFoundException 사용자를 찾을 수 없는 경우
      */
     @Override
     @Transactional
     public UserDto updateUser(String userId, UserDto userDto) {
-        if (userId == null || userId.isEmpty()) {
-            throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
-        }
-        if (userDto == null) {
-            throw new IllegalArgumentException("사용자 정보를 입력해 주세요.");
-        }
-        try {
-            // DB에서 사용자 검색 후, Entity 객체를 파라미터로 전달된 userId를 기준으로 조회
-            UserEntity existingUser = userReposiory.findByUserId(userId)
-                    .orElseThrow(() -> new ApplicationExceptions("USER_NOT_FOUND", "해당 사용자 정보를 찾을 수 없습니다."));
-            // 입력받은 Dto 객체의 정보를 바탕으로 Entity 객체의 사용자 정보 수정
-            existingUser.updateUserName(userDto.getUserName());
-            existingUser.updateUserPassword(userDto.getUserPassword());
-            existingUser.updateUserAge(userDto.getUserAge());
-            existingUser.updateUserJob(userDto.getUserJob());
-            // 수정된 Entity 객체를 DB에 저장
-            UserEntity updatedUserEntity = userReposiory.save(existingUser);
-            // 수정된 Entity 객체를 Dto 객체로 변환하여 반환
-            return UserDto.fromUserEntity(updatedUserEntity);
-        } catch (Exception e) {
-            // 수정 중 발생한 예외를 통합 예외로 래핑하여 throw
-            throw new ApplicationExceptions("USER_UPDATE_FAILED", "사용자 정보 수정 실패", e);
-        }
+        log.info("사용자 정보 수정: {}", userId);
+
+        // 사용자 정보 조회 - 없으면 UserNotFoundException 발생
+        UserEntity userEntity = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApplicationExceptions.UserNotFoundException(userId));
+
+        // ModelMapper를 사용해 엔티티 업데이트 (null이 아닌 필드만)
+        modelMapper.updateUserEntityFromDto(userEntity, userDto);
+        userRepository.save(userEntity);
+
+        return modelMapper.toUserDto(userEntity);
     }
 
     /**
-     * 사용자 정보 삭제
-     *
-     * @param userId 삭제할 사용자의 아이디
-     * @throws IllegalArgumentException 만약 userId가 null 또는 빈 문자열이면 발생
-     * @throws ApplicationExceptions    삭제 중 예외 발생 시 발생
+     * 사용자 삭제
+     * 
+     * @param userId 삭제할 사용자 아이디
+     * @throws ApplicationExceptions.UserNotFoundException 사용자를 찾을 수 없는 경우
      */
     @Override
     @Transactional
     public void deleteUser(String userId) {
-        if (userId == null || userId.isEmpty()) {
-            throw new IllegalArgumentException("해당 사용자 아이디가 없습니다.");
+        log.info("사용자 삭제: {}", userId);
+
+        // 사용자 존재 확인 - 없으면 UserNotFoundException 발생
+        if (!userRepository.existsByUserId(userId)) {
+            log.warn("사용자를 찾을 수 없음: {}", userId);
+            throw new ApplicationExceptions.UserNotFoundException(userId);
         }
+
         try {
-            // DB에서 사용자 아이디를 기준으로 삭제 수행
-            userReposiory.deleteByUserId(userId);
+            // 인증 정보 삭제
+            authRepository.deleteByUserId(userId);
+
+            // 사용자 정보 삭제
+            userRepository.deleteByUserId(userId);
+
+            log.info("사용자 삭제 완료: {}", userId);
         } catch (Exception e) {
-            throw new ApplicationExceptions("USER_DELETE_FAILED", "사용자 정보 삭제 실패", e);
+            // DB 삭제 실패 등 기술적 예외 발생 시
+            log.error("사용자 삭제 중 오류 발생: {}", e.getMessage(), e);
+            throw new ApplicationExceptions("USER_DELETE_FAILED",
+                    "사용자 삭제 중 오류가 발생했습니다", e);
+        }
+    }
+
+    /**
+     * 비밀번호 변경
+     * 
+     * @param userId          사용자 아이디
+     * @param currentPassword 현재 비밀번호
+     * @param newPassword     새 비밀번호
+     * @throws ApplicationExceptions.UserPasswordNotMatchException 현재 비밀번호가 일치하지 않음
+     * @throws ApplicationExceptions.UserNotFoundException         사용자를 찾을 수 없는 경우
+     */
+    @Transactional
+    public void changePassword(String userId, String currentPassword, String newPassword) {
+        log.info("비밀번호 변경 요청: {}", userId);
+
+        // 인증 정보 조회 - 없으면 UserNotFoundException 발생
+        AuthEntity authEntity = authRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    log.warn("사용자를 찾을 수 없음: {}", userId);
+                    return new ApplicationExceptions.UserNotFoundException(userId);
+                });
+
+        // 현재 비밀번호 검증
+        if (!passwordEncoder.matches(currentPassword, authEntity.getUserPassword())) {
+            log.warn("비밀번호 불일치: {}", userId);
+            throw new ApplicationExceptions.UserPasswordNotMatchException(userId);
+        }
+
+        try {
+            // 새 비밀번호 암호화 및 저장
+            String encodedNewPassword = passwordEncoder.encode(newPassword);
+            authEntity.updatePassword(encodedNewPassword);
+            authRepository.save(authEntity);
+
+            log.info("비밀번호 변경 완료: {}", userId);
+        } catch (Exception e) {
+            log.error("비밀번호 변경 중 오류 발생: {}", e.getMessage(), e);
+            throw new ApplicationExceptions("PASSWORD_UPDATE_FAILED",
+                    "비밀번호 변경 중 오류가 발생했습니다", e);
         }
     }
 }

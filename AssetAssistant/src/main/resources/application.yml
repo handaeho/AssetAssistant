@@ -1,0 +1,55 @@
+spring:
+  profiles:
+    active: dev
+
+---
+# 개발 환경
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+jwt:
+  secret-key: dev_secret_key_should_be_longer_in_production
+  token-validity-in-seconds: 86400  # 24시간
+
+logging:
+  level:
+    kr.daeho.AssetAssistant: DEBUG
+    org.springframework: INFO
+
+---
+# 운영 환경
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://localhost:3306/asset_assistant
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  token-validity-in-seconds: 86400
+
+logging:
+  level:
+    kr.daeho.AssetAssistant: INFO
+    org.springframework: WARN
+  file:
+    name: /var/log/asset-assistant/application.log

@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.users.entity;
+package kr.daeho.AssetAssistant.auth.entity;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
@@ -9,18 +9,17 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
+import kr.daeho.AssetAssistant.users.entity.UserEntity;
 
 /**
- * 사용자 정보 Entity
+ * 사용자 인증 정보 Entity
  * 
  * DB 테이블과 1:1 또는 1:N 관계로 매핑되는 객체로 DB에 저장되거나 조회되는 데이터의 단위
  * 
@@ -41,10 +40,10 @@ import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users", indexes = {
-        @Index(name = "idx_user_id_users", columnList = "user_id")
+@Table(name = "auth", indexes = {
+        @Index(name = "idx_user_id_auth", columnList = "user_id")
 })
-public class UserEntity {
+public class AuthEntity {
     /**
      * 사용자 데이터 고유 식별자 (User DB의 PK)
      * 
@@ -67,49 +66,60 @@ public class UserEntity {
     private String userId;
 
     /**
-     * 사용자 이름
+     * 사용자 비밀번호
      * 
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
-    @Column(name = "user_name", nullable = false)
-    private String userName;
+    @Column(name = "user_password", nullable = false)
+    private String userPassword;
 
     /**
-     * 사용자 나이
+     * 사용자 권한
      * 
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
-    @Column(name = "user_age", nullable = true)
-    private int userAge;
+    @Column(name = "user_role", nullable = false)
+    private String userRole;
 
     /**
-     * 사용자 직업
-     * 
-     * @Column: 테이블의 컬럼과 매핑
-     *          - name: 컬럼명
-     *          - nullable: 널 가능 여부
+     * 계정 잠금 여부
      */
-    @Column(name = "user_job", nullable = true)
-    private String userJob;
+    @Builder.Default
+    @Column(name = "locked", nullable = false)
+    private boolean locked = false;
 
     /**
-     * 사용자 정보 수정일
-     * 
-     * @UpdateTimestamp: 엔티티 수정 시 자동으로 수정일 업데이트
-     * @Column: 테이블의 컬럼과 매핑
-     *          - name: 컬럼명
-     *          - nullable: 널 가능 여부
+     * 비밀번호 만료 일시
      */
-    @UpdateTimestamp
-    @Column(name = "user_updated_at", nullable = false)
-    private LocalDateTime userUpdatedAt;
+    @Column(name = "password_expiry_date", nullable = false)
+    private LocalDateTime passwordExpiryDate;
 
     /**
-     * 사용자 인증 정보 (auth 테이블 정보)
+     * 최종 로그인 일시
+     */
+    @Column(name = "last_login_date", nullable = false)
+    private LocalDateTime lastLoginDate;
+
+    /**
+     * 계정 생성 일시
+     */
+    @Builder.Default
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    /**
+     * 계정 업데이트 일시
+     */
+    @Builder.Default
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    /**
+     * 사용자 프로필 정보 (users 테이블 정보)
      * 
      * @OneToOne: 1:1 관계 설정
      * @FetchType.LAZY: 지연 로딩 설정 (실제로 사용하는 시점에 조회)
@@ -121,32 +131,34 @@ public class UserEntity {
      */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
-    private AuthEntity authInfo;
+    private UserEntity userProfile;
 
     /**
-     * 사용자 이름 정보 업데이트
+     * 비밀번호 업데이트
      * 
-     * @param userName: 업데이트할 사용자 이름
+     * @param newPassword 새 암호화된 비밀번호
      */
-    public void updateUserName(String userName) {
-        this.userName = userName;
+    public void updatePassword(String newPassword) {
+        this.userPassword = newPassword;
+        this.passwordExpiryDate = LocalDateTime.now().plusMonths(3); // 비밀번호 유효기간 3개월
+        this.updatedAt = LocalDateTime.now();
     }
 
     /**
-     * 사용자 나이 업데이트
-     * 
-     * @param userAge: 업데이트할 사용자 나이
+     * 로그인 성공 시 호출
+     * 마지막 로그인 시간 업데이트
      */
-    public void updateUserAge(int userAge) {
-        this.userAge = userAge;
+    public void updateLoginTime() {
+        this.lastLoginDate = LocalDateTime.now();
     }
 
     /**
-     * 사용자 직업 업데이트
+     * 계정 잠금/해제
      * 
-     * @param userJob: 업데이트할 사용자 직업
+     * @param locked 잠금 여부
      */
-    public void updateUserJob(String userJob) {
-        this.userJob = userJob;
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+        this.updatedAt = LocalDateTime.now();
     }
 }

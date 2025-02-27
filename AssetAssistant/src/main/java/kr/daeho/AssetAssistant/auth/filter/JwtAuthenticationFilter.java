@@ -1,19 +1,22 @@
-package kr.daeho.AssetAssistant.security;
+package kr.daeho.AssetAssistant.auth.filter;
 
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.lang.NonNull;
+
+import kr.daeho.AssetAssistant.security.JWTokenProvider;
+import kr.daeho.AssetAssistant.security.SecurityUserDetailService;
 
 /**
  * JWT 토큰 기반 인증을 처리하는 필터로 OncePerRequestFilter를 상속 받음
@@ -70,13 +73,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 요청 헤더에서 JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
-            log.debug("JWT 토큰 추출: {}", jwt != null ? "성공" : "실패");
 
             // 토큰이 유효한 경우 인증 처리
             if (jwt != null && jwtTokenProvider.validateToken(jwt)) {
                 // 토큰에서 사용자 아이디 추출
                 String userId = jwtTokenProvider.getUserIdFromToken(jwt);
-                log.debug("토큰에서 사용자 ID 추출: {}", userId);
 
                 // UserDetails 객체 생성 (사용자 정보 로드)
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
@@ -95,7 +96,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // [인증 과정 11단계]: SecurityContextHolder에 Authentication 저장
                 // SecurityContext에 Authentication 객체 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("인증 정보 설정 완료: {}", userId);
             }
         } catch (Exception ex) {
             log.error("JWT 토큰 인증 처리 중 오류 발생: {}", ex.getMessage());

@@ -1,13 +1,16 @@
 package kr.daeho.AssetAssistant.users.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
+import kr.daeho.AssetAssistant.common.controller.BaseController;
+import kr.daeho.AssetAssistant.common.dto.ApiResponse;
 
 /**
  * 사용자 컨트롤러
@@ -28,11 +31,13 @@ import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
  * @RequestMapping: 사용자 관련 요청 URL과 매핑하기 위한 기본 프리픽스(~/user/~)
  * @RequiredArgsConstructor: 생성자 주입 방식을 사용하기 위한 어노테이션
  *                           (final 및 notNull 필드에 대한 생성자 자동 생성)
+ * @Slf4j: 로깅을 위한 어노테이션
  */
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserController {
+@Slf4j
+public class UserController extends BaseController {
     // 인터페이스 선언 (final로 선언해 불변성 보장)
     // 컨트롤러는 서비스(실제)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
     // @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
@@ -40,48 +45,73 @@ public class UserController {
 
     // ResponseEntity: HTTP 상태 코드(예: 200 OK, 204 No Content, 404 Not Found 등)를 함께 반환
 
-    // 사용자 정보 조회
+    /**
+     * 회원 가입 처리
+     * 
+     * @param signUpRequestDto 회원 가입 요청 정보
+     * @return 회원 가입 성공 시 200 OK 응답
+     */
+    @PostMapping("/signup")
+    public ResponseEntity<ApiResponse<Void>> signUp(
+            @Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+        log.info("회원가입 요청: {}", signUpRequestDto.getUserId());
+
+        // 회원가입 처리 (예외 발생 시 GlobalExceptionHandler로 전파)
+        userInterfaces.signUp(signUpRequestDto);
+
+        return success(null, "회원가입이 완료되었습니다");
+    }
+
+    /**
+     * 사용자 정보 조회
+     * 
+     * @param userId 사용자 아이디
+     * @return 사용자 정보 DTO
+     */
     @GetMapping("/info/{userId}")
-    public ResponseEntity<UserDto> getUserInfo(@RequestParam String userId) {
+    public ResponseEntity<ApiResponse<UserDto>> getUserInfo(@PathVariable String userId) {
         // userId를 통해 사용자 정보 검색 및 반환
+        log.info("사용자 정보 조회: {}", userId);
+
+        // 사용자 조회 (사용자 없으면 UserNotFoundException 발생, GlobalExceptionHandler로 전파)
         UserDto userDto = userInterfaces.getUserInfo(userId);
-        if (userId == null || userDto == null) {
-            // 사용자 정보가 없는 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(userDto);
+
+        return success(userDto, "사용자 정보 조회가 완료되었습니다");
     }
 
-    // 사용자 정보 등록
-    @PostMapping("/create")
-    public ResponseEntity<UserDto> createUser(@RequestBody @Validated UserDto userDto) {
-        // userId를 통해 사용자 정보 등록 및 반환
-        UserDto createdUserDto = userInterfaces.createUser(userDto);
-        if (createdUserDto == null) {
-            // 잘못된 정보가 입력된 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return new ResponseEntity<>(createdUserDto, HttpStatus.CREATED);
-    }
-
-    // 사용자 정보 수정
+    /**
+     * 사용자 정보 수정
+     * 
+     * @param userId  사용자 아이디
+     * @param userDto 수정할 사용자 정보
+     * @return 수정된 사용자 정보 DTO
+     */
     @PutMapping("/update/{userId}")
-    public ResponseEntity<UserDto> updateUser(@RequestParam String userId, @RequestBody UserDto userDto) {
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable String userId,
+            @Valid @RequestBody UserDto userDto) {
         // userId를 통해 사용자 정보 수정 및 반환
+        log.info("사용자 정보 수정: {}", userId);
+
+        // 사용자 정보 수정 (예외 발생 시 GlobalExceptionHandler로 전파)
         UserDto updatedUserDto = userInterfaces.updateUser(userId, userDto);
-        if (userId == null || updatedUserDto == null) {
-            // 수정 대상이 없는 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updatedUserDto);
+
+        return success(updatedUserDto, "사용자 정보 수정이 완료되었습니다");
     }
 
-    // 사용자 정보 삭제
+    /**
+     * 사용자 삭제
+     * 
+     * @param userId 사용자 아이디
+     * @return 삭제 성공 시 204(콘텐츠 없음) 응답
+     */
     @DeleteMapping("/delete/{userId}")
     public ResponseEntity<Void> deleteUser(@RequestParam String userId) {
         // userId를 통해 사용자 정보 삭제
+        log.info("사용자 삭제 요청: {}", userId);
+
+        // 사용자 삭제 (예외 발생 시 GlobalExceptionHandler로 전파)
         userInterfaces.deleteUser(userId);
-        // 삭제 성공 시 204(콘텐츠 없음) 응답
-        return ResponseEntity.noContent().build();
+
+        return noContent();
     }
 }

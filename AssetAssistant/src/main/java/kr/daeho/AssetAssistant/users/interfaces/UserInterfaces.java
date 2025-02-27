@@ -1,5 +1,6 @@
 package kr.daeho.AssetAssistant.users.interfaces;
 
+import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 
 /**
@@ -18,17 +19,37 @@ import kr.daeho.AssetAssistant.users.dto.UserDto;
  * 역할 분리: 클라이언트는 컨트롤러 및 인터페이스와 소통하고, 내부 서비스에 접근하지 않아도 됨
  */
 public interface UserInterfaces {
-    // 사용자 정보 조회
-    public UserDto getUserInfo(String userId);
+    /**
+     * 사용자 생성 (회원가입)
+     * 
+     * @param signUpRequestDto 회원가입 요청 정보
+     * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
+     */
+    UserDto signUp(SignUpRequestDto signUpRequestDto);
 
-    // 사용자 정보 등록
-    public UserDto createUser(UserDto userDto);
+    /**
+     * 사용자 정보 조회
+     * 
+     * @param userId 사용자 아이디
+     * @return 사용자 정보
+     */
+    UserDto getUserInfo(String userId);
 
-    // 사용자 정보 수정
-    public UserDto updateUser(String userId, UserDto userDto);
+    /**
+     * 사용자 정보 수정
+     * 
+     * @param userId  사용자 아이디
+     * @param userDto 수정할 사용자 정보
+     * @return 수정된 사용자 정보
+     */
+    UserDto updateUser(String userId, UserDto userDto);
 
-    // 사용자 정보 삭제
-    public void deleteUser(String userId);
+    /**
+     * 사용자 삭제
+     * 
+     * @param userId 삭제할 사용자 아이디
+     */
+    void deleteUser(String userId);
 
     // default 메소드
     // 인터페이스에서 작성한 기능은 반드시 상속받는 구현 메소드에서 작성되어야 함함

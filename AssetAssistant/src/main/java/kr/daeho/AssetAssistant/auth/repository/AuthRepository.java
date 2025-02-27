@@ -1,14 +1,14 @@
-package kr.daeho.AssetAssistant.users.repository;
+package kr.daeho.AssetAssistant.auth.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import kr.daeho.AssetAssistant.users.entity.UserEntity;
+import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
 
 /**
- * 사용자 레파지토리
+ * 사용자 인증 정보 레파지토리
  * 
- * 사용자 정보의 생성, 조회, 수정, 삭제 등 영속성 계층 연산을 제공
+ * 사용자 인증 정보의 생성, 조회, 수정, 삭제 등 영속성 계층 연산을 제공
  * 
  * 스프링 데이터 JPA를 통해 자동으로 구현체가 생성됨
  * 
@@ -22,17 +22,19 @@ import kr.daeho.AssetAssistant.users.entity.UserEntity;
  * 
  * -> 테스트 용이성 향상. DB 구현체 변경에 유연하게 대응 가능
  */
-public interface UserReposiory extends JpaRepository<UserEntity, Long> {
+public interface AuthRepository extends JpaRepository<AuthEntity, Long> {
     /**
-     * 사용자 아이디로 사용자 정보 조회 (조회 결과가 없을 경우 Optional.empty 반환(NPE 방지))
+     * 사용자 아이디로 사용자 인증 정보 조회 (조회 결과가 없을 경우 Optional.empty 반환(NPE 방지))
+     * 
+     * [인증 과정 8단계]: 사용자 아이디를 기반으로 DB에서 사용자 상세 정보 조회
      * 
      * @param userId 사용자 아이디
-     * @return Optional<UserEntity> 조회된 사용자 정보
+     * @return Optional<AuthEntity> 조회된 사용자 인증 정보
      */
-    Optional<UserEntity> findByUserId(String userId);
+    Optional<AuthEntity> findByUserId(String userId);
 
     /**
-     * 사용자 아이디 존재 여부 확인 (회원가입 시 아이디 중복 검사)
+     * 사용자 아이디 존재 여부 확인
      * 
      * @param userId 사용자 아이디
      * @return boolean 존재 여부

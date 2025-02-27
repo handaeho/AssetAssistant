@@ -1,13 +1,12 @@
 package kr.daeho.AssetAssistant.users.dto;
 
+import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import kr.daeho.AssetAssistant.users.entity.UserEntity;
 
 /**
  * 사용자 정보 DTO
@@ -36,15 +35,15 @@ public class UserDto {
     @Size(min = 4, max = 16, message = "사용자 아이디 - 4자 이상 16자 이하")
     private String userId;
 
+    // 사용자 비밀번호
+    @NotBlank(message = "사용자 비밀번호 - 필수 항목")
+    @Size(min = 8, max = 16, message = "사용자 비밀번호 - 8자 이상 16자 이하")
+    private String userPassword;
+
     // 사용자 이름
     @NotBlank(message = "사용자 이름 - 필수 항목")
     @Size(min = 2, max = 10, message = "사용자 이름 - 2자 이상 10자 이하")
     private String userName;
-
-    // 사용자 비밀번호
-    @NotBlank(message = "사용자 비밀번호 - 필수 항목")
-    @Size(min = 4, max = 16, message = "사용자 비밀번호 - 4자 이상 16자 이하")
-    private String userPassword;
 
     // 사용자 나이
     private int userAge;
@@ -52,41 +51,6 @@ public class UserDto {
     // 사용자 직업
     private String userJob;
 
-    /**
-     * UserDto를 UserEntity로 변환하는 메소드
-     * 
-     * 신규 생성이라면, DB에서 필요한 모든 필드 값을 빌드해야 하고 (기본 값, 자동 생성 값 등 포함)
-     * 업데이트라면, 업데이트 할 필드만 빌드하면 나머지는 DB에 있는 기존 값을 유지하게 가능
-     * DTO를 Entity로 변환할 때는 특정 DTO 인스턴스의 현재 상태(this)가 필요하므로 인스턴스 메서드로 구현
-     * 
-     * @return 변환된 UserEntity 객체
-     */
-    public UserEntity toUserEntity() {
-        return UserEntity.builder()
-                .id(id) // DB에서 사용되는 고유식별자(ID)
-                .userId(userId) // 사용자 아이디
-                .userName(userName) // 사용자 이름
-                .userPassword(userPassword) // 사용자 비밀번호
-                .userAge(userAge) // 사용자 나이
-                .userJob(userJob) // 사용자 직업
-                .build();
-    }
-
-    /**
-     * UserEntity를 UserDto로 변환하는 메소드
-     * 
-     * DB에서 클라이언트에게 전달할 데이터만 빌드
-     * Entity를 DTO로 변환할 때는 특정 DTO 인스턴스의 상태가 필요하지 않으므로 static 메서드로 구현
-     * 
-     * @param entity 변환할 엔티티
-     * @return 변환된 DTO
-     */
-    public static UserDto fromUserEntity(UserEntity userEntity) {
-        return UserDto.builder()
-                .userId(userEntity.getUserId()) // 사용자 아이디
-                .userName(userEntity.getUserName()) // 사용자 이름
-                .userAge(userEntity.getUserAge()) // 사용자 나이
-                .userJob(userEntity.getUserJob()) // 사용자 직업
-                .build();
-    }
+    // 사용자 정보 수정일
+    private LocalDateTime userUpdatedAt;
 }

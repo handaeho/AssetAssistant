@@ -1,15 +1,16 @@
 package kr.daeho.AssetAssistant.assets.dto;
 
-import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
-import kr.daeho.AssetAssistant.assets.vo.IncomeVo;
-import kr.daeho.AssetAssistant.assets.vo.ExpenseVo;
-import kr.daeho.AssetAssistant.assets.vo.AssetsDetailVo;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Map;
+
+import kr.daeho.AssetAssistant.assets.vo.IncomeVo;
+import kr.daeho.AssetAssistant.assets.vo.ExpenseVo;
+import kr.daeho.AssetAssistant.assets.vo.AssetsDetailVo;
 
 /**
  * 자산 정보 DTO
@@ -60,46 +61,9 @@ public class AssetsDto {
     // 계산된 수입 대비 지출 비율 (백분율)
     private double incomeExpenseRatio;
 
-    /**
-     * AssetsDto를 AssetsEntity로 변환하는 메소드
-     * 
-     * 신규 생성이라면, DB에서 필요한 모든 필드 값을 빌드해야 하고 (기본 값, 자동 생성 값 등 포함)
-     * 업데이트라면, 업데이트 할 필드만 빌드하면 나머지는 DB에 있는 기존 값을 유지하게 가능
-     * DTO를 Entity로 변환할 때는 특정 DTO 인스턴스의 현재 상태(this)가 필요하므로 인스턴스 메서드로 구현
-     * 
-     * @return 변환된 AssetsEntity 객체
-     */
-    public AssetsEntity toAssetsEntity() {
-        return AssetsEntity.builder()
-                .id(id) // DB에서 사용되는 고유식별자(ID)
-                .userId(userId) // 사용자 아이디
-                .totalAssets(totalAssets) // 전체 자산 금액
-                .income(income) // 수입 정보
-                .expense(expense) // 지출 정보
-                .assetDetails(assetDetails) // 여러 자산 상세 정보
-                .assetsTypeRatios(assetsTypeRatios) // 각 자산 타입별 비율
-                .incomeExpenseRatio(incomeExpenseRatio) // 수입 대비 지출 비율
-                .build();
-    }
+    // 자산 정보 생성일
+    private LocalDateTime createdAt;
 
-    /**
-     * AssetsEntity를 AssetsDto로 변환하는 메소드
-     * 
-     * DB에서 클라이언트에게 전달할 데이터만 빌드
-     * Entity를 DTO로 변환할 때는 특정 DTO 인스턴스의 상태가 필요하지 않으므로 static 메서드로 구현
-     * 
-     * @param entity 변환할 엔티티
-     * @return 변환된 DTO
-     */
-    public static AssetsDto fromAssetsEntity(AssetsEntity entity) {
-        return AssetsDto.builder()
-                .userId(entity.getUserId()) // 사용자 아이디
-                .totalAssets(entity.getTotalAssets()) // 전체 자산 금액
-                .income(entity.getIncome()) // 수입 정보
-                .expense(entity.getExpense()) // 지출 정보
-                .assetDetails(entity.getAssetDetails()) // 여러 자산 상세 정보
-                .assetsTypeRatios(entity.getAssetsTypeRatios()) // 각 자산 타입별 비율
-                .incomeExpenseRatio(entity.getIncomeExpenseRatio()) // 수입 대비 지출 비율
-                .build();
-    }
+    // 자산 정보 수정일
+    private LocalDateTime updatedAt;
 }

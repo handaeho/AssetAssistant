@@ -1,19 +1,20 @@
 package kr.daeho.AssetAssistant.security;
 
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import java.util.Date;
+import io.jsonwebtoken.MalformedJwtException;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.stereotype.Component;
 
 /**
  * JWT 토큰 생성, 검증, 파싱을 담당하는 유틸리티 클래스
@@ -51,27 +52,18 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JWTokenProvider {
-    /**
-     * JWT 시크릿 키 주입
-     * 
-     * properties 나 yml 파일에 비밀키의 원문을 작성하고, 이를 암호화 해 비밀키 생성에 사용
-     * 
-     * jwtSecret 문자열은 최소 256비트(32바이트) 이상 (아니면 예외 발생)
-     * 
-     * @Value: 스프링 컨테이너가 관리하는 빈(컴포넌트) 내부에서 외부 설정값을 주입받을 때 사용
-     *         - 예: application.properties 또는 application.yml, 환경 변수 등
-     */
-    @Value("${jwt.secret-key}")
-    private String jwtSecret;
+    private final String secretKey;
+    private final long tokenValidityInMilliseconds;
+    private final UserDetailsService userDetailsService;
 
-    /**
-     * 토큰 유효기간(밀리초 단위, 기본 1시간) 주입
-     * 
-     * @Value: 스프링 컨테이너가 관리하는 빈(컴포넌트) 내부에서 외부 설정값을 주입받을 때 사용
-     *         - 예: application.properties 또는 application.yml, 환경 변수 등
-     */
-    @Value("${jwt.expire-length}")
-    private long jwtExpirationMs;
+    public JWTokenProvider(
+            @Value("${jwt.secret-key}") String secretKey,
+            @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds,
+            UserDetailsService userDetailsService) {
+        this.secretKey = secretKey;
+        this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
+        this.userDetailsService = userDetailsService;
+    }
 
     /**
      * 인증 정보를 기반으로 JWT 토큰 생성
@@ -92,25 +84,35 @@ public class JWTokenProvider {
      * @return 생성된 JWT 토큰 문자열
      */
     public String generateToken(Authentication authentication) {
-        // 사용자 이름 추출 (등록 클레임의 주체, 토큰 식별자)
-        String username = authentication.getName();
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + tokenValidityInMilliseconds);
 
-        // 현재 시간 및 토큰 만료 시간 계산
-        Date nowDate = new Date();
-        Date expiryDate = new Date(nowDate.getTime() + jwtExpirationMs);
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 
-        // 주입된 jwtSecret 문자열을 바탕으로 HS256 알고리즘에 적합한 시크릿 키 생성
-        // jwtSecret 문자열 -> 바이트 배열로 변환 -> HS256 알고리즘에 맞는 시크릿 키 생성
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-
-        // JWT 빌더를 사용한 토큰 생성 및 반환
-        // Jwts: JWT 토큰 생성 및 검증을 위한 유틸리티 클래스 (jjwt에서 지원)
         return Jwts.builder()
-                .subject(username) // 주체 설정
-                .issuedAt(nowDate) // 토큰 발행 시간
-                .expiration(expiryDate) // 토큰 만료 시간
-                .signWith(key) // 시크릿 키
-                .compact(); // 최종 토큰 생성
+                .subject(authentication.getName())
+                .issuedAt(now)
+                .expiration(validity)
+                .signWith(key, Jwts.SIG.HS512)
+                .compact();
+    }
+
+    /**
+     * JWT 토큰에서 사용자 아이디 추출
+     */
+    public String getUserIdFromToken(String token) {
+        try {
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            log.error("토큰에서 사용자 아이디 추출 실패: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -129,15 +131,10 @@ public class JWTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            // 주입된 jwtSecret 문자열을 바탕으로 HS256 알고리즘에 적합한 시크릿 키 생성
-            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-            // JWT 파서 생성(JWT 구조 파싱 및 클레임 추출)
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
             Jwts.parser()
-                    // 서명 검증을 위한 SecretKey 설정
                     .verifyWith(key)
-                    // 파서 인스턴스 생성
                     .build()
-                    // 서명 검증 포함 파싱 (토큰 구조 해석 및 SecretKey로 위변조 확인, 클레임 추출)
                     .parseSignedClaims(token);
             return true;
         } catch (SignatureException ex) {
@@ -167,20 +164,11 @@ public class JWTokenProvider {
      * @param token 토큰 문자열
      * @return 사용자 이름(주체) 및 클레임 정보
      */
-    public String getUserIdFromToken(String token) {
-        // 주입된 jwtSecret 문자열을 바탕으로 HS256 알고리즘에 적합한 시크릿 키 생성
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    public Authentication getAuthentication(String token) {
+        String userId = getUserIdFromToken(token);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
-        return Jwts.parser()
-                // 서명 검증을 위한 SecretKey 설정
-                .verifyWith(key)
-                // 파서 인스턴스 생성
-                .build()
-                // 서명 검증 포함 파싱 (토큰 구조 해석 및 SecretKey로 위변조 확인, 클레임 추출)
-                .parseSignedClaims(token)
-                // 클레임(토큰에 들어있는 각종 정보(등록 클레임, 공개 클레임, 비공개 클레임)) 추출
-                .getPayload()
-                // 주체(사용자 아이디) 추출
-                .getSubject();
+        return new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
     }
 }
