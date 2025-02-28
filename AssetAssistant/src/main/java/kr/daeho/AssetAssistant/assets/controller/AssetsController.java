@@ -3,9 +3,12 @@ package kr.daeho.AssetAssistant.assets.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import kr.daeho.AssetAssistant.assets.dto.AssetsDto;
 import kr.daeho.AssetAssistant.assets.interfaces.AssetsInterfaces;
+import kr.daeho.AssetAssistant.common.controller.BaseController;
+import kr.daeho.AssetAssistant.common.dto.ApiResponse;
 
 /**
  * 자산 컨트롤러
@@ -26,58 +29,92 @@ import kr.daeho.AssetAssistant.assets.interfaces.AssetsInterfaces;
  * @RequestMapping: 자산 관련 요청 URL과 매핑하기 위한 기본 프리픽스(~/assets/~)
  * @RequiredArgsConstructor: 생성자 주입 방식을 사용하기 위한 어노테이션 (@Autowired 대신 사용)
  *                           (final 및 notNull 필드에 대한 생성자 자동 생성)
+ * @Slf4j: 로깅을 위한 어노테이션
  */
 @RestController
-@RequestMapping("/assets")
+@RequestMapping("/api/assets")
 @RequiredArgsConstructor
-public class AssetsController {
+@Slf4j
+public class AssetsController extends BaseController {
     // 인터페이스 선언 (final로 선언해 불변성 보장)
     // 컨트롤러는 서비스(실제)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
     // @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final AssetsInterfaces assetsInterfaces;
 
-    // 자산 정보 조회
+    /**
+     * 사용자의 자산 정보 조회
+     * 
+     * @param userId 사용자 ID
+     * @return 자산 정보
+     */
     @GetMapping("/info/{userId}")
-    public ResponseEntity<AssetsDto> getAssetsInfo(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<AssetsDto>> getAssetsInfo(@PathVariable String userId) {
+        log.info("자산 정보 조회 요청 처리: {}", userId);
+
         // userId를 통해 자산 정보 검색 및 반환
         AssetsDto assetsDto = assetsInterfaces.getAssetsInfo(userId);
-        if (userId == null || assetsDto == null) {
-            // 자산 정보가 없는 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(assetsDto);
+
+        log.info("자산 정보 조회 완료: {}", userId);
+
+        return success(assetsDto, "자산 정보 조회 성공");
     }
 
-    // 자산 정보 등록
+    /**
+     * 사용자의 자산 정보 등록
+     * 
+     * @param userId    사용자 ID
+     * @param assetsDto 자산 정보 DTO
+     * @return 자산 정보
+     */
     @PostMapping("/create/{userId}")
-    public ResponseEntity<AssetsDto> createAssets(@PathVariable String userId, @RequestBody AssetsDto assetsDto) {
+    public ResponseEntity<ApiResponse<AssetsDto>> createAssets(@PathVariable String userId,
+            @RequestBody AssetsDto assetsDto) {
+        log.info("자산 정보 등록 요청 처리: {}", userId);
+
         // userId를 통해 자산 정보 등록 및 반환
         AssetsDto createdAssetsDto = assetsInterfaces.createAssets(userId, assetsDto);
-        if (userId == null || assetsDto == null) {
-            // 잘못된 정보가 입력된 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(createdAssetsDto);
+
+        log.info("자산 정보 등록 완료: {}", userId);
+
+        return success(createdAssetsDto, "자산 정보 등록 성공");
     }
 
-    // 자산 정보 수정
+    /**
+     * 사용자의 자산 정보 수정
+     * 
+     * @param userId    사용자 ID
+     * @param assetsDto 자산 정보 DTO
+     * @return 자산 정보
+     */
     @PutMapping("/update/{userId}")
-    public ResponseEntity<AssetsDto> updateAssets(@PathVariable String userId, @RequestBody AssetsDto assetsDto) {
+    public ResponseEntity<ApiResponse<AssetsDto>> updateAssets(@PathVariable String userId,
+            @RequestBody AssetsDto assetsDto) {
+        log.info("자산 정보 수정 요청 처리: {}", userId);
+
         // userId를 통해 자산 정보 수정 및 반환
         AssetsDto updatedAssetsDto = assetsInterfaces.updateAssets(userId, assetsDto);
-        if (userId == null || updatedAssetsDto == null) {
-            // 수정 대상이 없는 경우 404 응답
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updatedAssetsDto);
+
+        log.info("자산 정보 수정 완료: {}", userId);
+
+        return success(updatedAssetsDto, "자산 정보 수정 성공");
     }
 
-    // 자산 정보 삭제
+    /**
+     * 사용자의 자산 정보 삭제
+     * 
+     * @param userId 사용자 ID
+     * @return 자산 정보
+     */
     @DeleteMapping("/delete/{userId}")
     public ResponseEntity<Void> deleteAssets(@PathVariable String userId) {
+        log.info("자산 정보 삭제 요청 처리: {}", userId);
+
         // userId를 통해 자산 정보 삭제
         assetsInterfaces.deleteAssets(userId);
+
+        log.info("자산 정보 삭제 완료: {}", userId);
+
         // 삭제 성공 시 204(콘텐츠 없음) 응답
-        return ResponseEntity.noContent().build();
+        return noContent();
     }
 }

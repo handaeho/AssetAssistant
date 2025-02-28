@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
 import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
 import kr.daeho.AssetAssistant.auth.repository.AuthRepository;
-import kr.daeho.AssetAssistant.common.exception.ApplicationExceptions;
-import kr.daeho.AssetAssistant.common.util.ModelMapper;
+import kr.daeho.AssetAssistant.common.exception.ApplicationException;
+import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
@@ -48,7 +48,7 @@ public class UserService implements UserInterfaces {
      * 회원가입 처리 -> 사용자 기본 정보와 인증 정보를 함께 저장
      * 
      * @param signUpRequestDto 회원가입 요청 정보
-     * @throws ApplicationExceptions.UserAlreadyExistsException 아이디 중복 시
+     * @throws ApplicationException.UserAlreadyExistsException 아이디 중복 시
      */
     @Transactional
     public UserDto signUp(SignUpRequestDto signUpRequestDto) {
@@ -58,8 +58,7 @@ public class UserService implements UserInterfaces {
 
         // 아이디 중복 검사 - 중복 시 UserAlreadyExistsException 발생
         if (authRepository.existsByUserId(userId)) {
-            log.warn("아이디 중복: {}", userId);
-            throw new ApplicationExceptions.UserAlreadyExistsException(userId);
+            throw new ApplicationException.UserAlreadyExistsException(userId);
         }
 
         // 2. 비밀번호 암호화
@@ -83,8 +82,7 @@ public class UserService implements UserInterfaces {
         } catch (Exception e) {
             // DB 저장 실패 등 기술적 예외 발생 시
             log.error("회원가입 처리 중 오류 발생: {}", e.getMessage(), e);
-            throw new ApplicationExceptions("USER_REGISTRATION_FAILED",
-                    "회원가입 처리 중 오류가 발생했습니다", e);
+            throw new ApplicationException.UserRegistrationFailedException(e);
         }
     }
 
@@ -102,8 +100,7 @@ public class UserService implements UserInterfaces {
         // 사용자 정보 조회 - 없으면 UserNotFoundException 발생
         UserEntity userEntity = userRepository.findByUserId(userId)
                 .orElseThrow(() -> {
-                    log.warn("사용자를 찾을 수 없음: {}", userId);
-                    return new ApplicationExceptions.UserNotFoundException(userId);
+                    return new ApplicationException.UserNotFoundException(userId);
                 });
 
         // Entity를 DTO로 변환하여 반환
@@ -125,7 +122,7 @@ public class UserService implements UserInterfaces {
 
         // 사용자 정보 조회 - 없으면 UserNotFoundException 발생
         UserEntity userEntity = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApplicationExceptions.UserNotFoundException(userId));
+                .orElseThrow(() -> new ApplicationException.UserNotFoundException(userId));
 
         // ModelMapper를 사용해 엔티티 업데이트 (null이 아닌 필드만)
         modelMapper.updateUserEntityFromDto(userEntity, userDto);
@@ -147,8 +144,7 @@ public class UserService implements UserInterfaces {
 
         // 사용자 존재 확인 - 없으면 UserNotFoundException 발생
         if (!userRepository.existsByUserId(userId)) {
-            log.warn("사용자를 찾을 수 없음: {}", userId);
-            throw new ApplicationExceptions.UserNotFoundException(userId);
+            throw new ApplicationException.UserNotFoundException(userId);
         }
 
         try {
@@ -162,8 +158,7 @@ public class UserService implements UserInterfaces {
         } catch (Exception e) {
             // DB 삭제 실패 등 기술적 예외 발생 시
             log.error("사용자 삭제 중 오류 발생: {}", e.getMessage(), e);
-            throw new ApplicationExceptions("USER_DELETE_FAILED",
-                    "사용자 삭제 중 오류가 발생했습니다", e);
+            throw new ApplicationException.UserDeleteFailedException(e);
         }
     }
 
@@ -183,14 +178,12 @@ public class UserService implements UserInterfaces {
         // 인증 정보 조회 - 없으면 UserNotFoundException 발생
         AuthEntity authEntity = authRepository.findByUserId(userId)
                 .orElseThrow(() -> {
-                    log.warn("사용자를 찾을 수 없음: {}", userId);
-                    return new ApplicationExceptions.UserNotFoundException(userId);
+                    return new ApplicationException.UserNotFoundException(userId);
                 });
 
-        // 현재 비밀번호 검증
+        // 현재 비밀번호 검증 - 일치하지 않으면 UserPasswordNotMatchException 발생
         if (!passwordEncoder.matches(currentPassword, authEntity.getUserPassword())) {
-            log.warn("비밀번호 불일치: {}", userId);
-            throw new ApplicationExceptions.UserPasswordNotMatchException(userId);
+            throw new ApplicationException.UserPasswordNotMatchException(userId);
         }
 
         try {
@@ -202,8 +195,7 @@ public class UserService implements UserInterfaces {
             log.info("비밀번호 변경 완료: {}", userId);
         } catch (Exception e) {
             log.error("비밀번호 변경 중 오류 발생: {}", e.getMessage(), e);
-            throw new ApplicationExceptions("PASSWORD_UPDATE_FAILED",
-                    "비밀번호 변경 중 오류가 발생했습니다", e);
+            throw new ApplicationException.PasswordUpdateFailedException(e);
         }
     }
 }

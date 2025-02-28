@@ -9,7 +9,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
-import kr.daeho.AssetAssistant.common.exception.ApplicationExceptions;
+import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 import kr.daeho.AssetAssistant.security.JWTokenProvider;
 
 /**
@@ -104,7 +104,7 @@ public class AuthService {
         } catch (AuthenticationException e) {
             // 스프링 시큐리티 예외를 애플리케이션 예외로 변환하여 일관된 처리
             log.error("로그인 실패: {}", e.getMessage());
-            throw new ApplicationExceptions.AuthenticationFailedException(e);
+            throw new ApplicationException.AuthenticationFailedException(e);
         }
     }
 
@@ -118,7 +118,7 @@ public class AuthService {
     public boolean validateToken(String token) {
         // 토큰이 null이거나 비어있는지 검사
         if (token == null || token.isEmpty()) {
-            throw new ApplicationExceptions.InvalidTokenException("토큰이 제공되지 않았습니다");
+            throw new ApplicationException.InvalidTokenException("토큰이 제공되지 않았습니다");
         }
 
         return jwtTokenProvider.validateToken(token);
@@ -134,7 +134,7 @@ public class AuthService {
     public String getUserIdFromToken(String token) {
         // 토큰이 null이거나 비어있는지 검사
         if (token == null || token.isEmpty()) {
-            throw new ApplicationExceptions.InvalidTokenException("토큰이 제공되지 않았습니다");
+            throw new ApplicationException.InvalidTokenException("토큰이 제공되지 않았습니다");
         }
 
         return jwtTokenProvider.getUserIdFromToken(token);

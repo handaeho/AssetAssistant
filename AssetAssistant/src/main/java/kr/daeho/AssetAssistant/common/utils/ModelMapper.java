@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.common.util;
+package kr.daeho.AssetAssistant.common.utils;
 
 import org.springframework.stereotype.Component;
 

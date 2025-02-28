@@ -17,29 +17,36 @@ import org.springframework.http.ResponseEntity;
  */
 public abstract class BaseController {
     /**
-     * 성공 응답 생성
+     * 성공 응답 생성 (200 OK)
      */
     protected <T> ResponseEntity<ApiResponse<T>> success(T data) {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
-     * 성공 응답 생성 (메시지 포함)
+     * 성공 응답 생성 (메시지 포함, 200 OK)
      */
     protected <T> ResponseEntity<ApiResponse<T>> success(T data, String message) {
         return ResponseEntity.ok(ApiResponse.success(data, message));
     }
 
     /**
-     * 생성 성공 응답 (201 Created)
+     * 성공 응답 생성 (상태 코드 지정)
      */
-    protected <T> ResponseEntity<ApiResponse<T>> created(T data) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(data, "리소스가 생성되었습니다"));
+    protected <T> ResponseEntity<ApiResponse<T>> success(HttpStatus status, T data, String message) {
+        return ResponseEntity.status(status)
+                .body(ApiResponse.success(status.value(), message, data));
     }
 
     /**
-     * 성공 응답 (내용 없음 204 No Content)
+     * 생성 성공 응답 (201 Created)
+     */
+    protected <T> ResponseEntity<ApiResponse<T>> created(T data) {
+        return success(HttpStatus.CREATED, data, "리소스가 생성되었습니다");
+    }
+
+    /**
+     * 삭제 성공 응답 (내용 없음 204 No Content)
      */
     protected ResponseEntity<Void> noContent() {
         return ResponseEntity.noContent().build();

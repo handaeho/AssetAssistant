@@ -1,0 +1,80 @@
+[사용자 인증 과정]
+ 
+ 1. 사용자 아이디 패스워드 입력
+    -> 클라이언트가 로그인 폼에 아이디와 비밀번호를 입력
+ 
+ 2. HTTPServletRequest 객체를 통해 입력된 아이디, 비밀번호 정보를 서버로 전달
+    -> HTTPServletRequest: 서블릿 컨테이너(웹 요청 처리 기본 단위, Tomcat 등)가 생성하는 객체
+    -> 입력 정보가 HTTP 요청의 본문이나 파라미터로 서버에 전달
+  
+3. AuthenticationFilter에서 유효성 검사 & UsernamePasswordAuthenticationToken 객체 생성
+  -> UsernamePasswordAuthenticationToken: Authentication 인터페이스를 구현, 사용자 인증정보 저장
+  -> 사용자의 아이디와 비밀번호를 추출하여 UsernamePasswordAuthenticationToken 객체를 생성
+  -> JWT 기반 인증 적용 시, 커스텀 필터나 커스텀 성공 핸들러를 사용해 토큰을 생성
+  
+4. AuthenticationManager에 UsernamePasswordAuthenticationToken 전달. 인증 처리 시작
+  -> AuthenticationManager: 인증 처리 과정을 담당하는 핵심 컴포넌트
+  -> 여러 AuthenticationProvider를 순차적으로 호출할 수도 있음
+  
+5. AuthenticationProvider에게 UsernamePasswordAuthenticationToken 전달
+  -> AuthenticationProvider: 실제 인증 로직 처리
+  -> 기본적으로는 DaoAuthenticationProvider 사용 (AuthenticationManager 내에 존재)
+  
+6. 사용자 아이디를 UserDetailsService에게 전달
+  -> AuthenticationProvider가 전달받은 토큰에서 사용자 아이디를 추출, 전달
+  
+7. UserDetailsService에서 사용자 아이디를 기반으로 UserDetails 객체 생성
+  -> UserDetailsService의 loadUserByUsername() 메서드: 사용자 아이디를 받아 사용자 상세 정보 조회 수행
+  
+8. 사용자 아이디를 기반으로 DB에서 사용자 상세 정보 조회
+  -> DB 뿐만 아니라 외부 시스템이나 캐시를 조회할 수도 있음
+  
+9. 조회된 정보를 담은 UserDetails 객체를 AuthenticationProvider에게 반환
+  -> 이름, 암호화 된 비밀번호, 권한, 활성화 상태 등
+  
+10. 입력한 정보와 UserDetails 객체의 정보 비교, 실제 인증 처리
+  -> AuthenticationProvider에서 입력 비밀번호와 UserDetails에서 반환한 (DB에 저장된) 암호화 비밀번호 비교
+  
+11. 인증 성공 시, SecurityContextHolder에 Authentication을 저장
+  -> SecurityContextHolder: 애플리케이션 전체에서 현재 사용자의 인증 정보를 참조 가능
+  -> 이 후, 요청 처리 과정에서 @AuthenticationPrincipal 등을 사용해 사용자 정보를 참조
+  
+12. 성공 시, AuthenticationSuccessHandler 핸들러 실행
+  -> 사용자를 홈 화면이나 요청했던 페이지로 리디렉션 등
+  
+13. AuthenticationSuccessHandler에서 JWT 발급 수행
+  -> 인증 성공 후, 커스텀 AuthenticationSuccessHandler (또는 필터 내 로직)에서
+  -> 사용자 정보(예: 아이디, 권한 등)를 기반으로 JWT를 생성
+  -> 생성된 JWT 토큰을 HTTP 응답 헤더(예: Authorization)나 응답 본문에 포함하여 클라이언트에게 전달
+  
+14. 클라이언트는 JWT를 저장 후 후속 요청 시 사용
+  -> 클라이언트는 JWT를 로컬 저장소(예: localStorage) 등에 저장하고,
+  -> 이후 요청 시 HTTP 헤더에 포함하여 전송
+  
+15. 후속 요청에 대한 JWT 인증 처리
+  -> 각 요청이 들어올 때, JWTAuthorizationFilter 같은 커스텀 인증 필터가 JWT를 추출하여 검증
+  -> 토큰이 유효하면, 해당 사용자 정보를 기반으로 SecurityContextHolder에 인증 정보를 설정하여 요청을 처리
+  
+16. 실패 시, AuthenticationFailureHandler 핸들러 실행
+  -> 실패 메시지를 포함하여 로그인 페이지로 리디렉션 등
+  
+[요약]
+  
+  > 인증 필터: UsernamePasswordAuthenticationFilter
+    -> 로그인 요청 처리, 사용자 자격 증명 추출, 토큰 생성
+  
+  > 인증 매니저: AuthenticationManager
+    -> 인증 프로세스 조율, 실제 인증 로직을 수행해 사용자 정보 검증의 주체
+  
+  > 사용자 정보 로드: UserDetailsService
+    -> 사용자 아이디를 받아 DB에서 사용자 상세 정보 조회
+  
+  > 비밀번호 비교: PasswordEncoder
+    -> 입력 비밀번호와 DB에 저장된 암호화 비밀번호 비교
+  
+  > 인증정보 저장: SecurityContextHolder
+    -> 인증 정보 저장, 인증 사용자 정보 유지, 애플리케이션 전반에 공유
+  
+  > 성공/실패 핸들러: AuthenticationSuccessHandler, AuthenticationFailureHandler
+    -> 인증 성공/실패 시 처리 로직 정의, JWT 발급 등
+    

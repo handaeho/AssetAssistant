@@ -34,7 +34,7 @@ import kr.daeho.AssetAssistant.common.dto.ApiResponse;
  * @Slf4j: 로깅을 위한 어노테이션
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController extends BaseController {

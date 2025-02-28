@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
 import kr.daeho.AssetAssistant.auth.dto.TokenResponseDto;
-import kr.daeho.AssetAssistant.auth.service.AuthService;
+import kr.daeho.AssetAssistant.auth.interfaces.AuthInterfaces;
 import kr.daeho.AssetAssistant.common.controller.BaseController;
 import kr.daeho.AssetAssistant.common.dto.ApiResponse;
 
@@ -26,12 +26,14 @@ import kr.daeho.AssetAssistant.common.dto.ApiResponse;
  * @Slf4j: 로깅을 위한 어노테이션
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController extends BaseController {
-    // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
-    private final AuthService authService; // 인증 관련 서비스
+    // 인터페이스 선언 (final로 선언해 불변성 보장)
+    // 컨트롤러는 서비스(실제)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
+    // @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
+    private final AuthInterfaces authInterfaces; // 인증 관련 인터페이스
 
     /**
      * 로그인 요청 처리 -> 사용자 인증 및 JWT 토큰 발급
