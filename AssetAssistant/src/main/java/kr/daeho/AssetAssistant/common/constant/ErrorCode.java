@@ -43,7 +43,11 @@ public enum ErrorCode {
     AUTHENTICATION_FAILED("AUTHENTICATION_FAILED", "인증에 실패했습니다", HttpStatus.UNAUTHORIZED),
     INVALID_TOKEN("INVALID_TOKEN", "유효하지 않은 토큰입니다", HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED("TOKEN_EXPIRED", "토큰이 만료되었습니다", HttpStatus.UNAUTHORIZED),
-    ACCESS_DENIED("ACCESS_DENIED", "접근 권한이 없습니다", HttpStatus.FORBIDDEN);
+    ACCESS_DENIED("ACCESS_DENIED", "접근 권한이 없습니다", HttpStatus.FORBIDDEN),
+    USER_GET_FAILED_FROM_TOKEN("USER_GET_FAILED_FROM_TOKEN",
+            "토큰에서 사용자 아이디를 추출할 수 없습니다.",
+            HttpStatus.UNAUTHORIZED),
+    INVALID_TOKEN_ALGORITHM("INVALID_TOKEN_ALGORITHM", "토큰 암호화 알고리즘이 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String message;
