@@ -65,6 +65,15 @@ public class ApplicationException extends RuntimeException {
     }
 
     /**
+     * 로그인 실패 시 발생하는 예외
+     */
+    public static class LoginFailedException extends ApplicationException {
+        public LoginFailedException(String userId) {
+            super(ErrorCode.LOGIN_FAILED, String.format("로그인에 실패했습니다.: %s", userId));
+        }
+    }
+
+    /**
      * 사용자 비밀번호 불일치 시 발생하는 예외
      */
     public static class UserPasswordNotMatchException extends ApplicationException {

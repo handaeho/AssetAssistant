@@ -14,9 +14,7 @@ import kr.daeho.AssetAssistant.common.controller.BaseController;
 import kr.daeho.AssetAssistant.common.dto.ApiResponse;
 
 /**
- * 사용자 컨트롤러
- * 
- * 사용자 정보를 조회, 등록, 수정, 삭제하는 기능을 제공
+ * 사용자 컨트롤러 -> 사용자 정보를 조회, 등록, 수정, 삭제 기능 제공
  * 
  * 애플리케이션의 진입점 역할로, 클라이언트의 요청을 받아 서비스 계층으로 전달하고, 결과를 클라이언트에 반환
  * 

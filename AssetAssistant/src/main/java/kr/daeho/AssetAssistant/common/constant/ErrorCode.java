@@ -25,6 +25,7 @@ public enum ErrorCode {
     VALIDATION_ERROR("VALIDATION_ERROR", "입력값 검증에 실패했습니다", HttpStatus.BAD_REQUEST),
 
     // 사용자 관련 오류
+    LOGIN_FAILED("LOGIN_FAILED", "로그인에 실패했습니다", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND("USER_NOT_FOUND", "사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     USER_ALREADY_EXISTS("USER_ALREADY_EXISTS", "사용자가 이미 존재합니다", HttpStatus.CONFLICT),
     USER_PASSWORD_NOT_MATCH("USER_PASSWORD_NOT_MATCH", "비밀번호가 일치하지 않습니다", HttpStatus.UNAUTHORIZED),

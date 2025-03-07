@@ -1,6 +1,5 @@
 package kr.daeho.AssetAssistant.common.utils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -111,29 +110,6 @@ public class ModelMapper {
         return UserEntity.builder()
                 .userId(signupRequestDto.getUserId())
                 .userName(signupRequestDto.getUserName())
-                .build();
-    }
-
-    // TODO: SignUpRequestDto를 AuthEntity로 변환 기능 수정 필요
-    /**
-     * SignUpRequestDto를 AuthEntity로 변환 (비밀번호는 외부에서 암호화 필요)
-     */
-    public AuthEntity signUpRequestToAuthEntity(SignupRequestDto signUpRequestDto, String encodedPassword) {
-        if (signUpRequestDto == null) {
-            return null;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        return AuthEntity.builder()
-                .userId(signUpRequestDto.getUserId())
-                .userPassword(encodedPassword)
-                .userRole("ROLE_USER")
-                .locked(false)
-                .passwordExpiryDate(now.plusMonths(3))
-                .lastLoginDate(now)
-                .createdAt(now)
-                .updatedAt(now)
                 .build();
     }
 

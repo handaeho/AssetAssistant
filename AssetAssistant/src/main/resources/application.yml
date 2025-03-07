@@ -19,8 +19,11 @@ spring:
     show-sql: true
 
 jwt:
-  secret-key: dev_secret_key_should_be_longer_in_production
-  token-validity-in-seconds: 86400  # 24시간
+  secret-key: 'AssetAssistantSecretKey1234567890AssetAssistantSecretKey1234567890'
+  token:
+    expiration-time: 3600000  # 1시간 (밀리초 단위)
+  refresh-token:
+    expiration-time: 604800000  # 7일 (밀리초 단위)
 
 logging:
   level:

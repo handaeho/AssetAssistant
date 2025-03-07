@@ -1,10 +1,10 @@
-package kr.daeho.AssetAssistant.users.interfaces;
+package kr.daeho.AssetAssistant.auth.interfaces;
 
-import kr.daeho.AssetAssistant.users.dto.UserDto;
-import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
+import kr.daeho.AssetAssistant.auth.dto.TokenResponseDto;
+import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
 
 /**
- * 사용자 회원가입 인터페이스
+ * 사용자 로그인 인터페이스
  * 
  * 클래스에서 가져야하는 메소드의 이름, 파라미터, 리턴값 등을 정의
  * 
@@ -15,14 +15,14 @@ import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
  * 느슨한 결합: 실제로 기능을 구현하는 클래스에 의존하지 않고, 인터페이스에 의존해 유연성 확보
  * 역할 분리: 클라이언트는 컨트롤러 및 인터페이스와 소통하고, 내부 서비스에 접근하지 않아도 됨
  */
-public interface UserSignupInterfaces {
+public interface AuthInterfaces {
     /**
-     * 사용자 생성 (회원가입)
+     * 사용자 로그인
      * 
-     * @param signUpRequestDto 회원가입 요청 정보
+     * @param loginRequestDto 로그인 요청 정보
      * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
      */
-    UserDto signup(SignupRequestDto signupRequestDto);
+    TokenResponseDto login(LoginRequestDto loginRequestDto);
 
     // default 메소드
     // 인터페이스에서 작성한 기능은 반드시 상속받는 구현 메소드에서 작성되어야 함함
