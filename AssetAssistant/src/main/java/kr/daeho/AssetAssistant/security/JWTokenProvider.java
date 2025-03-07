@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Value;
@@ -211,7 +211,6 @@ public class JWTokenProvider {
                     .parseSignedClaims(token); // 서명된 클레임 추출(서명 검증 수행)
 
             return true;
-            // TODO: 이 부분 확인 -> The type SignatureException is deprecated
         } catch (SignatureException e) {
             // 토큰 변조 또는 제공된 시크릿키와 실제 토큰 서명이 다를 때
             log.error("유효하지 않은 JWT 서명: {}", e.getMessage());
