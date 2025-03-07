@@ -1,6 +1,5 @@
 package kr.daeho.AssetAssistant.users.dto;
 
-import java.time.LocalDateTime;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
