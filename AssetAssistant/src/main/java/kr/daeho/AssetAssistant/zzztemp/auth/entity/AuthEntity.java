@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.entity;
+package kr.daeho.AssetAssistant.zzztemp.auth.entity;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;

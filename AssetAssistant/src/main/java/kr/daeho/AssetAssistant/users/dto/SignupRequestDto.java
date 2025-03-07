@@ -1,13 +1,16 @@
 package kr.daeho.AssetAssistant.users.dto;
 
 import java.time.LocalDateTime;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 사용자 정보 DTO
+ * 사용자 회원가입 정보 DTO
  * 
  * DTO: 클라이언트와 서비스 간 데이터 전송을 위한 객체
  * 
@@ -24,22 +27,23 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class SignupRequestDto {
     // DB에서 사용되는 고유식별자(ID)
     private Long id;
 
     // 사용자 아이디 (식별자)
+    @NotBlank(message = "사용자 아이디 - 필수 항목")
+    @Size(min = 4, max = 16, message = "사용자 아이디 - 4자 이상 16자 이하")
     private String userId;
 
+    // 사용자 비밀번호
+    @NotBlank(message = "비밀번호는 필수 항목입니다")
+    @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$", message = "비밀번호는 최소 하나의 문자, 숫자, 특수문자를 포함해야 합니다")
+    private String password;
+
     // 사용자 이름
+    @NotBlank(message = "사용자 이름 - 필수 항목")
+    @Size(min = 2, max = 10, message = "사용자 이름 - 2자 이상 10자 이하")
     private String userName;
-
-    // 사용자 나이
-    private int userAge;
-
-    // 사용자 직업
-    private String userJob;
-
-    // 사용자 정보 수정일
-    private LocalDateTime userUpdatedAt;
 }

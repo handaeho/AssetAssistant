@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.filter;
+package kr.daeho.AssetAssistant.zzztemp.security;
 
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +14,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
-
-import kr.daeho.AssetAssistant.security.JWTokenProvider;
-import kr.daeho.AssetAssistant.security.SecurityUserDetailService;
 
 /**
  * JWT 토큰 기반 인증을 처리하는 필터로 OncePerRequestFilter를 상속 받음

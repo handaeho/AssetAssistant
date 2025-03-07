@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.repository;
+package kr.daeho.AssetAssistant.zzztemp.auth.repository;
 
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

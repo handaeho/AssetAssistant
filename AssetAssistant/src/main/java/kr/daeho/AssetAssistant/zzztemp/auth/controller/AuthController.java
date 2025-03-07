@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.controller;
+package kr.daeho.AssetAssistant.zzztemp.auth.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ public class AuthController extends BaseController {
 
         // [인증 과정 3-16단계]: 로그인 처리 및 JWT 토큰 발급 (예외 발생 시 GlobalExceptionHandler로 전파)
         // loginRequestDto로 받은 아이디, 비밀번호 검증 후, JWT 토큰 발급
-        String token = authService.login(loginRequestDto);
+        String token = authInterfaces.login(loginRequestDto);
 
         // [인증 과정 14단계]: 클라이언트에게 JWT 토큰 전달 (DTO 객체 사용)
         TokenResponseDto response = TokenResponseDto.builder()
@@ -75,7 +75,7 @@ public class AuthController extends BaseController {
         log.info("토큰 유효성 검증 요청");
 
         // 토큰 검증 (예외 발생 시 GlobalExceptionHandler로 전파)
-        boolean isValid = authService.validateToken(token);
+        boolean isValid = authInterfaces.validateToken(token);
 
         return success(isValid, isValid ? "유효한 토큰입니다" : "유효하지 않은 토큰입니다");
     }

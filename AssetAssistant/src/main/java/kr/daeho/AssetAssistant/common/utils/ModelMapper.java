@@ -1,17 +1,15 @@
 package kr.daeho.AssetAssistant.common.utils;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
-import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
-import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
+import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.assets.dto.AssetsDto;
 import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Entity-DTO 변환을 처리하는 공통 유틸리티. 모든 모델 변환 로직을 중앙화 (Entity -> DTO, DTO -> Entity)
@@ -42,7 +40,7 @@ public class ModelMapper {
 
         return UserDto.builder()
                 .userId(userEntity.getUserId())
-                .userName(userEntity.getUserName())
+                .userName(userEntity.getUsername())
                 .userAge(userEntity.getUserAge())
                 .userJob(userEntity.getUserJob())
                 .userUpdatedAt(userEntity.getUserUpdatedAt())
@@ -105,21 +103,22 @@ public class ModelMapper {
     /**
      * SignUpRequestDto를 UserEntity로 변환
      */
-    public UserEntity signUpRequestToUserEntity(SignUpRequestDto signUpRequestDto) {
-        if (signUpRequestDto == null) {
+    public UserEntity signUpRequestToUserEntity(SignupRequestDto signupRequestDto) {
+        if (signupRequestDto == null) {
             return null;
         }
 
         return UserEntity.builder()
-                .userId(signUpRequestDto.getUserId())
-                .userName(signUpRequestDto.getUserName())
+                .userId(signupRequestDto.getUserId())
+                .userName(signupRequestDto.getUserName())
                 .build();
     }
 
+    // TODO: SignUpRequestDto를 AuthEntity로 변환 기능 수정 필요
     /**
      * SignUpRequestDto를 AuthEntity로 변환 (비밀번호는 외부에서 암호화 필요)
      */
-    public AuthEntity signUpRequestToAuthEntity(SignUpRequestDto signUpRequestDto, String encodedPassword) {
+    public AuthEntity signUpRequestToAuthEntity(SignupRequestDto signUpRequestDto, String encodedPassword) {
         if (signUpRequestDto == null) {
             return null;
         }

@@ -6,15 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
-import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
-import kr.daeho.AssetAssistant.auth.repository.AuthRepository;
-import kr.daeho.AssetAssistant.common.exception.ApplicationException;
-import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
 import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.common.utils.ModelMapper;
+import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**
  * 사용자 관리 서비스 -> 사용자 등록(회원가입), 조회, 수정, 삭제 기능 담당
@@ -40,51 +37,8 @@ import kr.daeho.AssetAssistant.users.repository.UserReposiory;
 public class UserService implements UserInterfaces {
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final UserReposiory userRepository; // 사용자 정보 저장을 위한 리포지토리
-    private final AuthRepository authRepository; // 인증 정보 저장을 위한 리포지토리
-    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화 및 일치 확인 등
-    private final ModelMapper modelMapper; // DTO와 Entity 간 변환 처리
-
-    /**
-     * 회원가입 처리 -> 사용자 기본 정보와 인증 정보를 함께 저장
-     * 
-     * @param signUpRequestDto 회원가입 요청 정보
-     * @throws ApplicationException.UserAlreadyExistsException 아이디 중복 시
-     */
-    @Transactional
-    public UserDto signUp(SignUpRequestDto signUpRequestDto) {
-        log.info("회원가입 처리: {}", signUpRequestDto.getUserId());
-
-        String userId = signUpRequestDto.getUserId();
-
-        // 아이디 중복 검사 - 중복 시 UserAlreadyExistsException 발생
-        if (authRepository.existsByUserId(userId)) {
-            throw new ApplicationException.UserAlreadyExistsException(userId);
-        }
-
-        // 2. 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
-
-        try {
-            // 1. 인증 정보 저장 (비밀번호 관련 정보는 AuthEntity에만 저장)
-            // ModelMapper를 사용하여 SignUpRequestDto → AuthEntity 변환
-            AuthEntity authEntity = modelMapper.signUpRequestToAuthEntity(signUpRequestDto, encodedPassword);
-            authRepository.save(authEntity);
-
-            // 2. 사용자 프로필 정보 저장 (UserEntity에는 비밀번호 없음)
-            // ModelMapper를 사용하여 SignUpRequestDto → UserEntity 변환
-            UserEntity userEntity = modelMapper.signUpRequestToUserEntity(signUpRequestDto);
-            userRepository.save(userEntity);
-
-            log.info("회원가입 완료: {}", userId);
-
-            // ModelMapper를 사용하여 UserEntity → UserDto 변환 및 리턴
-            return modelMapper.toUserDto(userEntity);
-        } catch (Exception e) {
-            // DB 저장 실패 등 기술적 예외 발생 시
-            log.error("회원가입 처리 중 오류 발생: {}", e.getMessage(), e);
-            throw new ApplicationException.UserRegistrationFailedException(e);
-        }
-    }
+    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화를 위한 패스워드 인코더
+    private final ModelMapper modelMapper; // 엔티티와 DTO 간 변환을 위한 모델 매퍼
 
     /**
      * 사용자 정보 조회
@@ -149,7 +103,7 @@ public class UserService implements UserInterfaces {
 
         try {
             // 인증 정보 삭제
-            authRepository.deleteByUserId(userId);
+            // authRepository.deleteByUserId(userId);
 
             // 사용자 정보 삭제
             userRepository.deleteByUserId(userId);
@@ -176,21 +130,21 @@ public class UserService implements UserInterfaces {
         log.info("비밀번호 변경 요청: {}", userId);
 
         // 인증 정보 조회 - 없으면 UserNotFoundException 발생
-        AuthEntity authEntity = authRepository.findByUserId(userId)
+        UserEntity userEntity = userRepository.findByUserId(userId)
                 .orElseThrow(() -> {
                     return new ApplicationException.UserNotFoundException(userId);
                 });
 
         // 현재 비밀번호 검증 - 일치하지 않으면 UserPasswordNotMatchException 발생
-        if (!passwordEncoder.matches(currentPassword, authEntity.getUserPassword())) {
+        if (!passwordEncoder.matches(currentPassword, userEntity.getUserPassword())) {
             throw new ApplicationException.UserPasswordNotMatchException(userId);
         }
 
         try {
             // 새 비밀번호 암호화 및 저장
             String encodedNewPassword = passwordEncoder.encode(newPassword);
-            authEntity.updatePassword(encodedNewPassword);
-            authRepository.save(authEntity);
+            userEntity.updateUserPassword(encodedNewPassword);
+            userRepository.save(userEntity);
 
             log.info("비밀번호 변경 완료: {}", userId);
         } catch (Exception e) {

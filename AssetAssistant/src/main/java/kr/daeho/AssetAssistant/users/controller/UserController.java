@@ -6,9 +6,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import kr.daeho.AssetAssistant.auth.dto.SignUpRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
+import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
+import kr.daeho.AssetAssistant.users.interfaces.UserSignupInterfaces;
 import kr.daeho.AssetAssistant.common.controller.BaseController;
 import kr.daeho.AssetAssistant.common.dto.ApiResponse;
 
@@ -42,8 +43,7 @@ public class UserController extends BaseController {
     // 컨트롤러는 서비스(실제)가 아닌 인터페이스(계약)에 의존하여 의존성 역전 및 느슨한 결합 확보
     // @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final UserInterfaces userInterfaces;
-
-    // ResponseEntity: HTTP 상태 코드(예: 200 OK, 204 No Content, 404 Not Found 등)를 함께 반환
+    private final UserSignupInterfaces userSignupInterfaces;
 
     /**
      * 회원 가입 처리
@@ -53,11 +53,11 @@ public class UserController extends BaseController {
      */
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signUp(
-            @Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+            @Valid @RequestBody SignupRequestDto signUpRequestDto) {
         log.info("회원가입 요청: {}", signUpRequestDto.getUserId());
 
         // 회원가입 처리 (예외 발생 시 GlobalExceptionHandler로 전파)
-        userInterfaces.signUp(signUpRequestDto);
+        userSignupInterfaces.signup(signUpRequestDto);
 
         return success(null, "회원가입이 완료되었습니다");
     }
@@ -113,5 +113,25 @@ public class UserController extends BaseController {
         userInterfaces.deleteUser(userId);
 
         return noContent();
+    }
+
+    /**
+     * 비밀번호 변경
+     * 
+     * @param userId          사용자 아이디
+     * @param currentPassword 현재 비밀번호
+     * @param newPassword     새로운 비밀번호
+     * @return 비밀번호 변경 성공 시 200 OK 응답
+     */
+    @PutMapping("/change-password/{userId}")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable String userId,
+            @RequestParam String currentPassword, @RequestParam String newPassword) {
+        // userId를 통해 사용자 정보 삭제
+        log.info("비밀번호 변경 요청: {}", userId);
+
+        // 비밀번호 변경 (예외 발생 시 GlobalExceptionHandler로 전파)
+        userInterfaces.changePassword(userId, currentPassword, newPassword);
+
+        return success(null, "비밀번호 변경이 완료되었습니다");
     }
 }

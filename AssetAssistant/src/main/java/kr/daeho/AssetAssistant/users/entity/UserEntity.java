@@ -1,23 +1,19 @@
 package kr.daeho.AssetAssistant.users.entity;
 
+import java.util.Collection;
+import java.util.List;
 import java.time.LocalDateTime;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.Table;
-import jakarta.persistence.Index;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
+import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 
 /**
  * 사용자 정보 Entity
@@ -44,7 +40,7 @@ import kr.daeho.AssetAssistant.auth.entity.AuthEntity;
 @Table(name = "users", indexes = {
         @Index(name = "idx_user_id_users", columnList = "user_id")
 })
-public class UserEntity {
+public class UserEntity implements UserDetails {
     /**
      * 사용자 데이터 고유 식별자 (User DB의 PK)
      * 
@@ -65,6 +61,16 @@ public class UserEntity {
      */
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId;
+
+    /**
+     * 사용자 비밀번호
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "user_password", nullable = false)
+    private String userPassword;
 
     /**
      * 사용자 이름
@@ -109,19 +115,13 @@ public class UserEntity {
     private LocalDateTime userUpdatedAt;
 
     /**
-     * 사용자 인증 정보 (auth 테이블 정보)
+     * 사용자 역할(권한, role)
      * 
-     * @OneToOne: 1:1 관계 설정
-     * @FetchType.LAZY: 지연 로딩 설정 (실제로 사용하는 시점에 조회)
-     * @JoinColumn: 조인 컬럼 지정
-     *              - name: 조인 컬럼명
-     *              - referencedColumnName: 참조 컬럼명
-     *              - insertable: 삽입 가능 여부
-     *              - updatable: 수정 가능 여부
+     * @Enumerated: 열거형(Enum) 타입 매핑
+     *              - EnumType.STRING: 열거형 타입의 이름을 문자열로 저장
      */
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
-    private AuthEntity authInfo;
+    @Enumerated(EnumType.STRING)
+    private UserRoleEnum role;
 
     /**
      * 사용자 이름 정보 업데이트
@@ -130,6 +130,15 @@ public class UserEntity {
      */
     public void updateUserName(String userName) {
         this.userName = userName;
+    }
+
+    /**
+     * 사용자 비밀번호 정보 업데이트
+     * 
+     * @param userPassword: 업데이트할 사용자 비밀번호
+     */
+    public void updateUserPassword(String userPassword) {
+        this.userPassword = userPassword;
     }
 
     /**
@@ -148,5 +157,57 @@ public class UserEntity {
      */
     public void updateUserJob(String userJob) {
         this.userJob = userJob;
+    }
+
+    // UserDetails 인터페이스 구현부
+
+    /**
+     * Spring Security의 UserDetails의 getAuthorities 메소드 구현
+     * 
+     * Collection<? extends GrantedAuthority>: GrantedAuthority 인터페이스를 구현한 객체들의 컬렉션
+     * 
+     * Collection: List, Queue, Set, Map 등을 포함하는 자료구조 인터페이스
+     * 
+     * List.of(): 주어진 요소를 포함하는 불변(immutable) 리스트를 생성
+     * 
+     * SimpleGrantedAuthority: Spring Security의 GrantedAuthority 구현체 (문자열 형태의 권한 정보)
+     * 
+     * role.name(): 사용자 역할을 문자열로 반환 (Enum 타입의 이름)
+     * 
+     * @return 사용자에게 부여된 권한(roles, authorities)
+     */
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        return userId;
+    }
+
+    @Override
+    public String getPassword() {
+        return userPassword;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

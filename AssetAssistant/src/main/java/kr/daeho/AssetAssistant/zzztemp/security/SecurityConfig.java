@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.security;
+package kr.daeho.AssetAssistant.zzztemp.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +14,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import kr.daeho.AssetAssistant.auth.filter.JwtAuthenticationFilter;
 
 /**
  * 스프링 시큐리티의 전반적인 설정 담당 클래스

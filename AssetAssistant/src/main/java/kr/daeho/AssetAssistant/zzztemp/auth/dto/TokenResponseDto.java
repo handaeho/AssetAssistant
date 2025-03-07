@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.dto;
+package kr.daeho.AssetAssistant.zzztemp.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

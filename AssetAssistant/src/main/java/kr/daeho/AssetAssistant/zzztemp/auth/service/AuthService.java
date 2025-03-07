@@ -1,4 +1,4 @@
-package kr.daeho.AssetAssistant.auth.service;
+package kr.daeho.AssetAssistant.zzztemp.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
+import kr.daeho.AssetAssistant.auth.interfaces.AuthInterfaces;
+import kr.daeho.AssetAssistant.auth.repository.AuthRepository;
+import kr.daeho.AssetAssistant.users.repository.UserReposiory;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 import kr.daeho.AssetAssistant.security.JWTokenProvider;
 
@@ -55,19 +58,15 @@ import kr.daeho.AssetAssistant.security.JWTokenProvider;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthService {
+public class AuthService implements AuthInterfaces {
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
+    private final UserReposiory userRepository; // 사용자 정보 저장을 위한 리포지토리
+    private final AuthRepository authRepository; // 인증 정보 저장을 위한 리포지토리
     private final JWTokenProvider jwtTokenProvider; // JWT 토큰 발급, 검증 등
     private final AuthenticationManager authenticationManager; // 인증 처리 과정을 담당하는 핵심 컴포넌트
 
     /**
-     * 로그인 처리
-     * 사용자 인증을 수행하고 JWT 토큰을 발급
-     * 
-     * [인증 과정 3-5단계]:
-     * AuthenticationFilter -> AuthenticationManager -> AuthenticationProvider
-     * 
-     * [인증 과정 12-13단계]: 인증 성공 -> JWT 토큰 생성
+     * 로그인 처리 -> 사용자 인증을 수행하고 JWT 토큰을 발급
      * 
      * [처리 절차]
      * 
@@ -92,6 +91,10 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(
                             loginRequestDto.getUserId(),
                             loginRequestDto.getPassword()));
+
+            // TODO: 로그인 시, 인증 토큰과 리프레시 토큰을 함께 발급? -> 토큰 갱신하는 방법?
+
+            // TODO: 로그인 시, 입력받은 비밀번호와 DB에 저장된 비밀번호는 어디서 비교?
 
             log.debug("인증 성공: {}", loginRequestDto.getUserId());
 
