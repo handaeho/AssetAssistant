@@ -21,8 +21,27 @@ public interface AuthInterfaces {
      * 
      * @param loginRequestDto 로그인 요청 정보
      * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
+     * @return TokenResponseDto (액세스 토큰과 리프레시 토큰, 만료시간, 타입)
      */
     TokenResponseDto login(LoginRequestDto loginRequestDto);
+
+    // TODO: 토큰 갱신 시, 액세스 토큰과 리프레시 토큰 모두 재발급하게 변경
+
+    /**
+     * 리프레시 토큰을 받아, 새 액세스 토큰을 발급 (리프레시 토큰은 기존 것을 유지)
+     * 
+     * @param refreshToken 리프레시 토큰
+     * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
+     * @return TokenResponseDto (새로운 액세스 토큰, 기존 리프레시 토큰, 만료시간, 타입)
+     */
+    TokenResponseDto refreshToken(String refreshToken);
+
+    /**
+     * 로그아웃 처리
+     * 
+     * @param token 액세스 토큰
+     */
+    void logout(String token);
 
     // default 메소드
     // 인터페이스에서 작성한 기능은 반드시 상속받는 구현 메소드에서 작성되어야 함함

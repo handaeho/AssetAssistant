@@ -1,5 +1,6 @@
 package kr.daeho.AssetAssistant.auth.service;
 
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -7,11 +8,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import kr.daeho.AssetAssistant.auth.interfaces.AuthInterfaces;
 import kr.daeho.AssetAssistant.auth.dto.TokenResponseDto;
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
 import kr.daeho.AssetAssistant.security.JWTokenProvider;
+import kr.daeho.AssetAssistant.security.SecurityUserDetailService;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**
@@ -57,7 +60,7 @@ public class AuthService implements AuthInterfaces {
      * -> Spring Security의 Authentication 인터페이스 구현체
      * 
      * @param loginRequest 로그인 요청 DTO
-     * @return 토큰 응답 DTO
+     * @return TokenResponseDto (액세스 토큰과 리프레시 토큰, 만료시간, 타입)
      * @throws ApplicationException.AuthenticationFailedException 인증 실패 시 발생
      */
     @Override
@@ -93,5 +96,67 @@ public class AuthService implements AuthInterfaces {
             log.error("로그인 실패: {}", loginRequestDto.getUserId(), e);
             throw new ApplicationException.LoginFailedException(loginRequestDto.getUserId());
         }
+    }
+
+    // TODO: 토큰 갱신 시, 액세스 토큰과 리프레시 토큰 모두 재발급하게 변경
+
+    /**
+     * 토큰 갱신 메소드 - 리프레시 토큰을 이용해 새 액세스 토큰 발급
+     * 
+     * @param refreshToken 리프레시 토큰
+     * @return 토큰 응답 DTO
+     * @throws ApplicationException.InvalidTokenException 유효하지 않은 토큰일 경우
+     */
+    public TokenResponseDto refreshToken(String refreshToken) {
+        log.info("토큰 갱신 요청");
+
+        // 토큰 유효성 검증
+        if (!tokenProvider.validateToken(refreshToken)) {
+            log.error("유효하지 않은 리프레시 토큰");
+            throw new ApplicationException.InvalidTokenException("유효하지 않은 리프레시 토큰입니다");
+        }
+
+        try {
+            // 토큰에서 사용자 ID 추출
+            String userId = tokenProvider.getUserIdFromToken(refreshToken);
+            log.info("토큰 갱신 - 사용자 ID: {}", userId);
+
+            // 인증 정보 가져오기
+            Authentication authentication = tokenProvider.getAuthentication(refreshToken);
+
+            // 새 액세스 토큰 생성
+            String newAccessToken = tokenProvider.generateAccessToken(authentication);
+
+            log.info("토큰 갱신 성공: {}", userId);
+
+            // 토큰 응답 DTO 객체 생성 및 반환
+            return TokenResponseDto.builder()
+                    .accessToken(newAccessToken)
+                    .refreshToken(refreshToken) // 기존 리프레시 토큰 유지
+                    .expiresIn(tokenProvider.getTokenExpirationTime())
+                    .tokenType("Bearer")
+                    .build();
+        } catch (Exception e) {
+            log.error("토큰 갱신 실패: {}", e.getMessage());
+            throw new ApplicationException.TokenRefreshFailedException("토큰 갱신에 실패했습니다");
+        }
+    }
+
+    /**
+     * 로그아웃 처리 메소드
+     * 
+     * @param token 액세스 토큰
+     */
+    public void logout(String token) {
+        // 토큰에서 사용자 ID 추출
+        String userId = tokenProvider.getUserIdFromToken(token);
+        log.info("로그아웃 요청: {}", userId);
+
+        // SecurityContext에서 인증 정보 제거
+        SecurityContextHolder.clearContext();
+
+        log.info("로그아웃 성공: {}", userId);
+
+        // NOTE: 실제 구현에서는 토큰 블랙리스트 처리 또는 Redis에 토큰 저장 등의 추가 작업 필요
     }
 }

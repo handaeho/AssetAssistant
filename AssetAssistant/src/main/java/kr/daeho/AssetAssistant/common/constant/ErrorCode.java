@@ -33,6 +33,8 @@ public enum ErrorCode {
     USER_REGISTRATION_FAILED("USER_REGISTRATION_FAILED", "회원가입 실패", HttpStatus.BAD_REQUEST),
     USER_DELETE_FAILED("USER_DELETE_FAILED", "사용자 삭제 실패", HttpStatus.BAD_REQUEST),
     PASSWORD_UPDATE_FAILED("PASSWORD_UPDATE_FAILED", "비밀번호 변경 실패", HttpStatus.BAD_REQUEST),
+    TOKEN_REFRESH_FAILED("TOKEN_REFRESH_FAILED", "토큰 갱신 실패", HttpStatus.BAD_REQUEST),
+    ACCOUNT_DISABLED("ACCOUNT_DISABLED", "계정이 비활성화되었습니다", HttpStatus.FORBIDDEN),
 
     // 자산 관련 오류
     ASSETS_NOT_FOUND("ASSETS_NOT_FOUND", "자산 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND),

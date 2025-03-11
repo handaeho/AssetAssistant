@@ -82,6 +82,27 @@ public class ApplicationException extends RuntimeException {
         }
     }
 
+    // 계정 잠김 예외
+    public static class AccountLockedException extends ApplicationException {
+        public AccountLockedException(String message) {
+            super(ErrorCode.ACCOUNT_LOCKED, message);
+        }
+    }
+
+    // 계정 비활성화 예외
+    public static class AccountDisabledException extends ApplicationException {
+        public AccountDisabledException(String message) {
+            super(ErrorCode.ACCOUNT_DISABLED, message);
+        }
+    }
+
+    // 토큰 갱신 실패 예외
+    public static class TokenRefreshFailedException extends ApplicationException {
+        public TokenRefreshFailedException(String message) {
+            super(ErrorCode.TOKEN_REFRESH_FAILED, message);
+        }
+    }
+
     /**
      * 회원가입 실패 시 발생하는 예외
      */
