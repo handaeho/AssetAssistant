@@ -1,6 +1,5 @@
 package kr.daeho.AssetAssistant.auth.service;
 
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,13 +7,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import kr.daeho.AssetAssistant.auth.interfaces.AuthInterfaces;
 import kr.daeho.AssetAssistant.auth.dto.TokenResponseDto;
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
 import kr.daeho.AssetAssistant.security.JWTokenProvider;
-import kr.daeho.AssetAssistant.security.SecurityUserDetailService;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**

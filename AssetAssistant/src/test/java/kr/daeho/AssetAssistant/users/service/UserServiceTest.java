@@ -25,7 +25,6 @@ import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.repository.UserReposiory;
-import kr.daeho.AssetAssistant.users.service.UserService;
 import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 
 /**
@@ -76,12 +75,20 @@ import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
     /**
-     * 테스트 대상 객체
+     * 테스트 대상 객체 - 사용자 서비스 (사용자 정보 조회, 수정, 삭제, 비밀번호 변경)
      * 
      * @InjectMocks: 모의 객체들을 주입받는 실제 객체
      */
     @InjectMocks
     private UserService userService;
+
+    /**
+     * 테스트 대상 객체 - 사용자 서비스 (사용자 회원가입)
+     * 
+     * @InjectMocks: 모의 객체들을 주입받는 실제 객체
+     */
+    @InjectMocks
+    private UserSignupService userSignupService;
 
     /**
      * 모의 객체 - 사용자 리포지토리
@@ -226,17 +233,28 @@ public class UserServiceTest {
     @Test
     @DisplayName("회원가입 성공")
     void signup_Success() {
-        // Given - 테스트 준비
+        // Given - 회원가입 테스트 준비
         // 사용자 아이디 중복 검사 (중복 없음)
+        when(userRepository.existsByUserId(TEST_USER_ID)).thenReturn(false);
         // 비밀번호 암호화
-        // 사용자 엔티티 저장
-        // DTO 변환
+        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(TEST_ENCRYPTED_PASSWORD);
+        // 사용자 Entity를 DB에 저장 후, 저장된 사용자 Entity 반환
+        when(userRepository.save(any(UserEntity.class))).thenReturn(testUserEntity);
+        // 사용자 Entity를 DTO로 변환 후, 변환된 사용자 DTO 반환
+        when(modelMapper.toUserDto(testUserEntity)).thenReturn(testUserDto);
 
-        // When - 테스트 실행
+        // When - 회원가입 테스트 실행
+        UserDto userDto = userSignupService.signup(testSignupRequestDto);
 
-        // Then - 결과 검증
+        // Then - 회원가입 결과 검증
+        assertNotNull(userDto, "회원가입 성공시, userDto가 NULL이 아님.");
+        assertEquals(TEST_USER_ID, userDto.getUserId(), "회원가입 성공시, 사용자 아이디가 일치함.");
 
-        // 리포지토리의 메소드들이 호출되었는지 검증
+        // 회원가입 진행 중, 필요한 메소드들이 호출되었는지 검증
+        verify(userRepository).existsByUserId(TEST_USER_ID); // 사용자 아이디 중복 검사 수행
+        verify(passwordEncoder).encode(TEST_PASSWORD); // 비밀번호 암호화 수행
+        verify(userRepository).save(any(UserEntity.class)); // 사용자 Entity를 DB에 저장 수행
+        verify(modelMapper).toUserDto(any(UserEntity.class)); // 사용자 Entity를 DTO로 변환 수행
     }
 
     /**
@@ -250,13 +268,23 @@ public class UserServiceTest {
     @Test
     @DisplayName("중복된 사용자 아이디로 회원가입 실패")
     void signup_DuplicateUserId() {
-        // Given - 테스트 준비
+        // Given - 회원가입 실패 테스트 준비
         // 사용자 아이디 중복 검사 (중복 있음)
+        when(userRepository.existsByUserId(TEST_USERNAME)).thenReturn(true);
 
-        // When & Then - 테스트 실행 및 예외 검증
+        // When & Then - 회원가입 실패 테스트 실행 및 예외 검증
+        assertThrows(ApplicationException.UserAlreadyExistsException.class,
+                () -> userSignupService.signup(testSignupRequestDto),
+                "중복된 사용자 아이디로 회원가입 시 UserAlreadyExistsException이 발생해야 함");
+
 
         // 리포지토리의 existsByUserId 메소드가 호출되었는지 검증
+        verify(userRepository).existsByUserId(TEST_USER_ID); // 사용자 아이디 중복 검사 수행
+
         // 다른 메소드들은 호출되지 않았는지 검증
+        verify(modelMapper, never()).toUserDto(any()); // 사용자 DTO 변환 수행 안됨
+        verify(passwordEncoder, never()).encode(any()); // 비밀번호 암호화 수행 안됨
+        verify(userRepository, never()).save(any()); // 사용자 엔티티 저장 수행 안됨
     }
 
     /**
@@ -270,16 +298,25 @@ public class UserServiceTest {
     @Test
     @DisplayName("비밀번호 변경 성공")
     void changePassword_Success() {
-        // Given - 테스트 준비
+        // Given - 비밀번호 변경 테스트 준비
+        String currentPassword = "CurrentPassword123!";
+        String newPassword = "NewPassword456!";
 
         // 사용자 조회
+        when(userRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(testUserEntity));
+        
         // 현재 비밀번호 일치 확인
-        // 새 비밀번호 암호화
+        when(passwordEncoder.matches(currentPassword, testUserEntity.getUserPassword())).thenReturn(true);
 
-        // When - 테스트 실행
+        // When - 비밀번호 변경 테스트 실행 (userService에서 새 비밀번호 암호화 후 저장 수행)
+        userService.changePassword(TEST_USER_ID, currentPassword, newPassword);
 
         // Then - 검증
         // 사용자 엔티티의 비밀번호가 업데이트되었는지 확인
+        verify(userRepository).findByUserId(TEST_USER_ID); // 사용자 조회 수행
+        verify(passwordEncoder).matches(currentPassword, testUserEntity.getUserPassword()); // 현재 비밀번호 일치 확인 수행
+        verify(passwordEncoder).encode(newPassword); // 새 비밀번호 암호화 수행
+        verify(userRepository).save(testUserEntity); // 사용자 엔티티 저장 수행
     }
 
     /**
@@ -294,17 +331,30 @@ public class UserServiceTest {
     @Test
     @DisplayName("현재 비밀번호 불일치로 비밀번호 변경 실패")
     void changePassword_WrongCurrentPassword() {
-        // Given - 테스트 준비
+        // Given - 비밀번호 변경 실패 테스트 준비
+        String wrongCurrentPassword = "WrongPassword123!";
+        String newPassword = "NewPassword456!";
 
         // 사용자 조회
+        when(userRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(testUserEntity));
+
         // 현재 비밀번호 불일치
+        when(passwordEncoder.matches(wrongCurrentPassword, testUserEntity.getUserPassword())).thenReturn(false);
+
 
         // When & Then - 테스트 실행 및 예외 검증
+        // When & Then - 테스트 실행 및 예외 검증
+        assertThrows(ApplicationException.UserPasswordNotMatchException.class,
+                () -> userService.changePassword(TEST_USER_ID, wrongCurrentPassword, newPassword),
+                "잘못된 현재 비밀번호로 변경 시 UserPasswordNotMatchException이 발생해야 함");
+
 
         // 사용자 정보 조회가 정상적으로 완료되었는지 검증
         verify(userRepository).findByUserId(TEST_USER_ID);
         // 저장된 암호화 비밀번호와 입력한 비밀번호가 일치하는지 검증
         verify(passwordEncoder).matches(wrongCurrentPassword, testUserEntity.getUserPassword());
         // 다른 메소드들은 호출되지 않았는지 검증
+        verify(passwordEncoder, never()).encode(any()); // 새 비밀번호 암호화 수행 안됨
+        verify(userRepository, never()).save(any()); // 사용자 엔티티 저장 수행 안됨
     }
 }

@@ -14,9 +14,9 @@ import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**
- * 사용자 관리 서비스 -> 사용자 등록(회원가입), 조회, 수정, 삭제 기능 담당
+ * 사용자 관리 서비스
  * 
- * 사용자 정보를 조회, 등록, 수정, 삭제하는 기능을 제공
+ * 사용자 정보를 조회, 수정, 삭제, 비밀번호 변경하는 기능을 제공
  * 
  * 컨트롤러에서 요청을 받아 비즈니스 로직을 처리하고, 결과를 반환
  * 
