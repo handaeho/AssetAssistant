@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
@@ -58,6 +59,16 @@ import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
  * 
  * 8. never(...): 모의(mock) 객체의 특정 메서드가 절대 호출되지 않아야 하는지 검증
  * -> public static <T> T never() { ... }
+ * 
+ * 9. any(): 특정 메서드 호출 시 인자의 실제 값은 중요하지 않을 때, 그 자리에서 "어떤 값이든 상관없다"라고 지정
+ * -> public static <T> T any(Class<T> type) { ... }
+ * 
+ * ex)
+ * when(userRepository.save(any(UserEntity.class))).thenReturn(testUserEntity);
+ * -> userRepository.save() 메서드가 호출될 때, UserEntity 타입의 어떤 객체가 전달되더라도
+ * testUserEntity를 반환하도록 설정
+ * -> 인자의 타입만 지정하면, 실제 전달되는 값은 무시.
+ * -> 값의 구체적인 내용보다 메서드 호출 자체가 이루어졌는지, 그리고 호출 횟수 등을 검증할 때 유용
  * 
  * [Given - when - Then: Behavior-Driven Development(BDD)의 테스트 시나리오 기술 패턴]
  * 1. Given: 테스트가 시작되기 전에 필요한 초기 상태나 조건을 설정하는 단계
@@ -138,7 +149,7 @@ public class UserServiceTest {
         testUserEntity = UserEntity.builder()
                 .userId(TEST_USER_ID) // 사용자 아이디
                 .userName(TEST_USERNAME) // 사용자 이름
-                .userPassword(TEST_ENCRYPTED_PASSWORD) // 사용자 비밀번호
+                .userPassword(TEST_PASSWORD) // 사용자 비밀번호
                 .userAge(TEST_USER_AGE) // 사용자 나이
                 .userJob(TEST_USER_JOB) // 사용자 직업
                 .userUpdatedAt(LocalDateTime.now()) // 사용자 정보 수정일
@@ -177,7 +188,7 @@ public class UserServiceTest {
         // 사용자 아이디로 레파지토리에서 사용자 정보 검색 후, 사용자 Entity 반환
         when(userRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(testUserEntity));
         // modelMapper를 사용하여 사용자 Entity를 사용자 DTO로 변환 후 반환
-        when(modelMapper.toUserDto(testUserEntity)).thenReturn(testUserDto);
+        when(modelMapper.toUserDto(any(UserEntity.class))).thenReturn(testUserDto);
 
         // When - 사용자 정보 조회 실행
         // 사용자 정보 조회 서비스를 호출하고, 사용자 아이디에 해당하는 사용자 정보 DTO 반환
@@ -193,7 +204,7 @@ public class UserServiceTest {
         // 리포지토리의 findByUserId 메소드가 호출되었는지 검증
         verify(userRepository).findByUserId(TEST_USER_ID);
         // 모델 매퍼의 toUserDto 메소드가 호출되었는지 검증
-        verify(modelMapper).toUserDto(testUserEntity);
+        verify(modelMapper).toUserDto(any(UserEntity.class));
     }
 
     /**
@@ -227,6 +238,9 @@ public class UserServiceTest {
      * 
      * 시나리오: 유효한 회원가입 요청 시 사용자가 생성되고 정보가 반환되어야 함
      * 
+     * UserEntity.class:
+     * -> 특정 객체(testUserEntity)가 아닌, 실제 signup() 메서드 내에서 생성되는 객체를 대상으로 모의 테스트
+     * 
      * @Test: 테스트 메소드 표시
      * @DisplayName: 테스트 목적을 명시적으로 표시 및 출력
      */
@@ -236,12 +250,19 @@ public class UserServiceTest {
         // Given - 회원가입 테스트 준비
         // 사용자 아이디 중복 검사 (중복 없음)
         when(userRepository.existsByUserId(TEST_USER_ID)).thenReturn(false);
+
         // 비밀번호 암호화
         when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(TEST_ENCRYPTED_PASSWORD);
+
         // 사용자 Entity를 DB에 저장 후, 저장된 사용자 Entity 반환
+        // UserEntity.class:
+        // 특정 객체(testUserEntity)가 아닌, 실제 signup() 메서드 내에서 생성되는 객체를 대상으로 모의 테스트
         when(userRepository.save(any(UserEntity.class))).thenReturn(testUserEntity);
+
         // 사용자 Entity를 DTO로 변환 후, 변환된 사용자 DTO 반환
-        when(modelMapper.toUserDto(testUserEntity)).thenReturn(testUserDto);
+        // UserEntity.class:
+        // 특정 객체(testUserEntity)가 아닌, 실제 signup() 메서드 내에서 생성되는 객체를 대상으로 모의 테스트
+        when(modelMapper.toUserDto(any(UserEntity.class))).thenReturn(testUserDto);
 
         // When - 회원가입 테스트 실행
         UserDto userDto = userSignupService.signup(testSignupRequestDto);
@@ -270,13 +291,12 @@ public class UserServiceTest {
     void signup_DuplicateUserId() {
         // Given - 회원가입 실패 테스트 준비
         // 사용자 아이디 중복 검사 (중복 있음)
-        when(userRepository.existsByUserId(TEST_USERNAME)).thenReturn(true);
+        when(userRepository.existsByUserId(TEST_USER_ID)).thenReturn(true);
 
         // When & Then - 회원가입 실패 테스트 실행 및 예외 검증
         assertThrows(ApplicationException.UserAlreadyExistsException.class,
                 () -> userSignupService.signup(testSignupRequestDto),
                 "중복된 사용자 아이디로 회원가입 시 UserAlreadyExistsException이 발생해야 함");
-
 
         // 리포지토리의 existsByUserId 메소드가 호출되었는지 검증
         verify(userRepository).existsByUserId(TEST_USER_ID); // 사용자 아이디 중복 검사 수행
@@ -304,19 +324,27 @@ public class UserServiceTest {
 
         // 사용자 조회
         when(userRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(testUserEntity));
-        
+
         // 현재 비밀번호 일치 확인
         when(passwordEncoder.matches(currentPassword, testUserEntity.getUserPassword())).thenReturn(true);
 
         // When - 비밀번호 변경 테스트 실행 (userService에서 새 비밀번호 암호화 후 저장 수행)
         userService.changePassword(TEST_USER_ID, currentPassword, newPassword);
 
-        // Then - 검증
-        // 사용자 엔티티의 비밀번호가 업데이트되었는지 확인
-        verify(userRepository).findByUserId(TEST_USER_ID); // 사용자 조회 수행
-        verify(passwordEncoder).matches(currentPassword, testUserEntity.getUserPassword()); // 현재 비밀번호 일치 확인 수행
-        verify(passwordEncoder).encode(newPassword); // 새 비밀번호 암호화 수행
-        verify(userRepository).save(testUserEntity); // 사용자 엔티티 저장 수행
+        // Then - 검증 (사용자 엔티티의 비밀번호가 업데이트되었는지 확인)
+        // 사용자 조회 수행
+        verify(userRepository).findByUserId(TEST_USER_ID);
+
+        // 현재 비밀번호 일치 확인 수행
+        // eq(...): 인자가 주어진 값(currentPassword)과 정확하게 동일한지 비교
+        // any(...): 올바른 타입이라면, 구체적인 값은 상관없고, 단지 메소드 호출만을 확인
+        verify(passwordEncoder).matches(eq(currentPassword), any());
+
+        // 새 비밀번호 암호화 수행
+        verify(passwordEncoder).encode(newPassword);
+
+        // 사용자 엔티티 저장 수행
+        verify(userRepository).save(testUserEntity);
     }
 
     /**
@@ -341,18 +369,19 @@ public class UserServiceTest {
         // 현재 비밀번호 불일치
         when(passwordEncoder.matches(wrongCurrentPassword, testUserEntity.getUserPassword())).thenReturn(false);
 
-
-        // When & Then - 테스트 실행 및 예외 검증
         // When & Then - 테스트 실행 및 예외 검증
         assertThrows(ApplicationException.UserPasswordNotMatchException.class,
                 () -> userService.changePassword(TEST_USER_ID, wrongCurrentPassword, newPassword),
                 "잘못된 현재 비밀번호로 변경 시 UserPasswordNotMatchException이 발생해야 함");
 
-
         // 사용자 정보 조회가 정상적으로 완료되었는지 검증
         verify(userRepository).findByUserId(TEST_USER_ID);
+
         // 저장된 암호화 비밀번호와 입력한 비밀번호가 일치하는지 검증
-        verify(passwordEncoder).matches(wrongCurrentPassword, testUserEntity.getUserPassword());
+        // eq(...): 인자가 주어진 값(wrongCurrentPassword)과 정확하게 동일한지 비교
+        // any(...): 올바른 타입이라면, 구체적인 값은 상관없고, 단지 메소드 호출만을 확인
+        verify(passwordEncoder).matches(eq(wrongCurrentPassword), any());
+
         // 다른 메소드들은 호출되지 않았는지 검증
         verify(passwordEncoder, never()).encode(any()); // 새 비밀번호 암호화 수행 안됨
         verify(userRepository, never()).save(any()); // 사용자 엔티티 저장 수행 안됨

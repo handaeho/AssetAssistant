@@ -54,7 +54,7 @@ public class UserSignupService implements UserSignupInterfaces {
         // 사용자 아이디 중복 체크
         if (userRepository.existsByUserId(signupRequestDto.getUserId())) {
             log.error("사용자 아이디 중복: {}", signupRequestDto.getUserId());
-            throw new ApplicationException(ErrorCode.USER_ALREADY_EXISTS);
+            throw new ApplicationException.UserAlreadyExistsException(signupRequestDto.getUserId());
         }
 
         // 비밀번호 암호화
