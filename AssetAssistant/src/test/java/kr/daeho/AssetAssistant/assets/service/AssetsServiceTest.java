@@ -480,4 +480,8 @@ public class AssetsServiceTest {
         // Then - 사용자 아이디에 해당하는 자산 정보 삭제 리포지토리 호출 검증
         verify(assetsRepository).deleteByUserId(TEST_USER_ID);
     }
+
+    /**
+     * 총액 계산 메서드 테스트
+     */
 }
