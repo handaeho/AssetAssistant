@@ -148,8 +148,8 @@ public class AssetsServiceTest {
     void setUp() {
         // 테스트용 자산 상세 정보 생성
         testAssetDetails = new ArrayList<>();
-        testAssetDetails.add(AssetsDetailVo.of("삼성전자", "주식", 500000));
-        testAssetDetails.add(AssetsDetailVo.of("국민은행적금", "적금", 500000));
+        testAssetDetails.add(AssetsDetailVo.of("삼성전자", 500000, "주식"));
+        testAssetDetails.add(AssetsDetailVo.of("국민은행적금", 500000, "적금"));
 
         // 테스트용 자산 타입별 비율 생성
         testAssetsTypeRatios = new HashMap<>();
@@ -482,6 +482,115 @@ public class AssetsServiceTest {
     }
 
     /**
-     * 총액 계산 메서드 테스트
+     * 총 금액 및 비율 계산 메서드 테스트
+     * 
+     * 시나리오: 수입, 지출, 자산 상세 정보를 입력받아,
+     * 총 수입, 총 지출, 총 자산 금액 및 수입 대비 지출 비율, 자산 타입 별 비율을 자동 계산
+     * 
+     * @Test: 테스트 메소드 표시
+     * @DisplayName: 테스트 목적을 명시적으로 표시 및 출력
      */
+    @Test
+    @DisplayName("총 금액 및 비율 계산 메서드 테스트")
+    void calculateTotalAmounts() {
+        // Given - 총 금액 계산 테스트 준비
+        // 수입, 지출, 자산 등 테스트 데이터
+        List<IncomeVo> incomes = new ArrayList<>(); // 수입 상세 리스트
+        incomes.add(IncomeVo.of("수입1", 1000, "고정"));
+        incomes.add(IncomeVo.of("수입2", 2000, "변동"));
+
+        List<ExpenseVo> expenses = new ArrayList<>(); // 지출 상세 리스트
+        expenses.add(ExpenseVo.of("지출1", 1000, "고정"));
+        expenses.add(ExpenseVo.of("지출2", 1000, "변동"));
+
+        List<AssetsDetailVo> assetDetails = new ArrayList<>(); // 자산 상세 리스트
+        assetDetails.add(AssetsDetailVo.of("자산1", 1000, "주식"));
+        assetDetails.add(AssetsDetailVo.of("자산2", 1000, "적금"));
+
+        // Entity 생성 및 금액 및 비율 계산 테스트를 위한 객체 준비
+        AssetsEntity assetsEntity = AssetsEntity.builder()
+                .userId(TEST_USER_ID)
+                .totalAssets(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
+                .totalIncome(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
+                .totalExpense(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
+                .incomeExpenseRatio(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
+                .incomes(incomes)
+                .expenses(expenses)
+                .assetDetails(assetDetails)
+                .assetsTypeRatios(new HashMap<>()) // 자동 계산 될 값
+                .build();
+
+        // 총 금액 및 비율 계산 메서드를 직접 호출하기 위해 별도의 AssetsService 서비스 객체 생성
+        AssetsService assetsService = new AssetsService(assetsRepository, modelMapper);
+
+        // When - 총 금액 및 비율 계산 메서드 테스트 실행
+        // AssetsService의 calculateAndUpdateAmounts 메소드는 private이므로 테스트를 위한 예상 결과 값
+        int expectedTotalIncome = 3000; // 1000 + 2000
+        int expectedTotalExpense = 2000; // 1000 + 1000
+        int expectedTotalAssets = 2000; // 1000 + 1000
+        double expectedIncomeExpenseRatio = (2000.0 / 3000.0) * 100; // 약 50%
+
+        // private 메소드를 위해 간접적으로 createAssets 메서드를 통해 계산 로직 테스트
+        // calculateAndUpdateAmounts 메소드를 내부적으로 호출하는 createAssets 메소드를 사용해
+        // 간접적으로 총 금액 및 비율 계산 로직 테스트
+        // -> 공개 API로 간접 테스트: 해당 private 메서드를 호출하는 public 메서드로 테스트
+        AssetsDto assetsDto = AssetsDto.builder()
+                .userId(TEST_USER_ID)
+                .incomes(incomes)
+                .expenses(expenses)
+                .assetDetails(assetDetails)
+                .build();
+
+        // assetsRepository의 save 메서드 모킹: 저장 요청된 엔티티를 그대로 반환
+        // thenAnswer(...): 호출된 메서드의 인자나 상황에 따라 동적으로 값을 반환하도록 설정
+        // invocation: 실제 호출 시 전달된 인자나 호출 정보를 참조
+        // invocation.getArgument(0):
+        // assetsRepository.save() 메서드 호출 시, 전달된 첫 번째 인자 (저장된 AssetsEntity 객체)
+        when(assetsRepository.save(any(AssetsEntity.class))).thenAnswer(invocation -> {
+            // 리포지토리에 Entity를 저장하고, 저장된 Entity를 리턴
+            AssetsEntity savedEntity = invocation.getArgument(0);
+            return savedEntity;
+        });
+
+        // modelMapper의 toAssetsDto 메서드 모킹: 저장된 엔티티를 DTO로 변환하는 모킹
+        // thenAnswer(...): 호출된 메서드의 인자나 상황에 따라 동적으로 값을 반환하도록 설정
+        // invocation: 실제 호출 시 전달된 인자나 호출 정보를 참조
+        // invocation.getArgument(0):
+        // modelMapper.toAssetsDto() 메서드 호출 시, 전달된 첫 번째 인자 (저장된 AssetsEntity 객체)
+        when(modelMapper.toAssetsDto(any(AssetsEntity.class))).thenAnswer(invocation -> {
+            // 저장된 Entity를 DTO로 변환하고, 변환된 DTO를 빌드 후 리턴
+            AssetsEntity savedEntity = invocation.getArgument(0);
+            return AssetsDto.builder()
+                    .userId(savedEntity.getUserId())
+                    .totalAssets(savedEntity.getTotalAssets())
+                    .totalIncome(savedEntity.getTotalIncome())
+                    .totalExpense(savedEntity.getTotalExpense())
+                    .incomeExpenseRatio(savedEntity.getIncomeExpenseRatio())
+                    .incomes(savedEntity.getIncomes())
+                    .expenses(savedEntity.getExpenses())
+                    .assetDetails(savedEntity.getAssetDetails())
+                    .assetsTypeRatios(savedEntity.getAssetsTypeRatios())
+                    .build();
+        });
+
+        // When - assetsService의 createAssets 메소드로 자동 계산 및 자산 정보 등록 테스트 실행
+        // 총 금액 자동 계산 및 자산 정보 등록 후, 등록된 자산 정보 Entity를 DTO로 변환해 반환
+        // 내부적으로 calculateAndUpdateAmounts 호출됨 (공개 API로 간접 테스트)
+        AssetsDto result = assetsService.createAssets(TEST_USER_ID, assetsDto);
+
+        // Then - 총 수입, 지출, 자산 금액 자동 계산 검증
+        assertEquals(expectedTotalIncome, result.getTotalIncome(), "총 수입이 올바르게 계산되어야 함.");
+        assertEquals(expectedTotalExpense, result.getTotalExpense(), "총 지출이 올바르게 계산되어야 함.");
+        assertEquals(expectedTotalAssets, result.getTotalAssets(), "총 자산이 올바르게 계산되어야 함.");
+
+        // 수입 대비 지출 비율 자동 계산 검증
+        assertEquals(expectedIncomeExpenseRatio, result.getIncomeExpenseRatio(), 0.01, "수입 대비 지출 비율이 올바르게 계산되어야 함.");
+
+        // 자산 타입별 비율 자동 계산 검증
+        Map<String, Double> assetsTypeRatios = result.getAssetsTypeRatios();
+        assertNotNull(assetsTypeRatios, "자산 타입별 비율이 계산되어야 함.");
+        assertEquals(2, assetsTypeRatios.size(), "자산 타입은 2개여야 함.");
+        assertEquals(50.0, assetsTypeRatios.get("주식"), 0.01, "주식 비율이 50.0%여야 함.");
+        assertEquals(50.0, assetsTypeRatios.get("적금"), 0.01, "적금 비율이 50.0%여야 함.");
+    }
 }

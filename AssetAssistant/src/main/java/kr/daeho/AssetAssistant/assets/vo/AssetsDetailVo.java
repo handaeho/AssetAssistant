@@ -41,6 +41,12 @@ public class AssetsDetailVo {
     private String assetsName;
 
     /**
+     * 자산 금액 (원 단위)
+     * 해당 자산의 현재 평가 금액
+     */
+    private int assetsPrice;
+
+    /**
      * 자산 타입 (예: 주식, 예금, 적금, 부동산 등)
      * 자산의 종류를 구분하는 카테고리
      * 
@@ -53,12 +59,8 @@ public class AssetsDetailVo {
     private AssetType assetsType;
 
     /**
-     * 자산 금액 (원 단위)
-     * 해당 자산의 현재 평가 금액
-     */
-    private int assetsPrice;
-
-    /**
+     * 자산 금액
+     * /**
      * String 타입의 자산 유형을 받는 정적 팩토리 메서드
      * 
      * @param assetsName     자산 이름
@@ -66,11 +68,11 @@ public class AssetsDetailVo {
      * @param assetsPrice    자산 금액
      * @return 생성된 AssetsDetailVo 객체
      */
-    public static AssetsDetailVo of(String assetsName, String assetsTypeCode, int assetsPrice) {
+    public static AssetsDetailVo of(String assetsName, int assetsPrice, String assetsTypeCode) {
         return AssetsDetailVo.builder()
                 .assetsName(assetsName)
-                .assetsType(AssetType.fromCode(assetsTypeCode))
                 .assetsPrice(assetsPrice)
+                .assetsType(AssetType.fromCode(assetsTypeCode))
                 .build();
     }
 
