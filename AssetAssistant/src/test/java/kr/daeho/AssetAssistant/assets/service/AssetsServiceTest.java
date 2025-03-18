@@ -452,5 +452,10 @@ public class AssetsServiceTest {
         // 사용자 아이디에 해당하는 자산 정보가 없음
         when(assetsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.empty());
 
+        // When & Then - 자산 정보가 없는 경우, 예외가 발생해야 함
+        assertThrows(ApplicationException.AssetsNotFoundException.class, () -> {
+            assetsService.updateAssets(TEST_USER_ID, testAssetsDto);
+        }, "자산 정보가 없는 경우 AssetsNotFoundException이 발생해야 함.");
+
     }
 }
