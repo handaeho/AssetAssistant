@@ -61,11 +61,12 @@ import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
  * -> public static <T> T never() { ... }
  * 
  * 9. any(): 특정 메서드 호출 시 인자의 실제 값은 중요하지 않을 때, 그 자리에서 "어떤 값이든 상관없다"라고 지정
+ * -> 단, 타입은 정확하게 전달 되어야 함
  * -> public static <T> T any(Class<T> type) { ... }
  * 
  * ex)
  * when(userRepository.save(any(UserEntity.class))).thenReturn(testUserEntity);
- * -> userRepository.save() 메서드가 호출될 때, UserEntity 타입의 어떤 객체가 전달되더라도
+ * -> userRepository.save() 메서드가 호출될 때, UserEntity 타입을 가진 어떤 객체가 전달되더라도
  * testUserEntity를 반환하도록 설정
  * -> 인자의 타입만 지정하면, 실제 전달되는 값은 무시.
  * -> 값의 구체적인 내용보다 메서드 호출 자체가 이루어졌는지, 그리고 호출 횟수 등을 검증할 때 유용
@@ -86,7 +87,7 @@ import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
     /**
-     * 테스트 대상 객체 - 사용자 서비스 (사용자 정보 조회, 수정, 삭제, 비밀번호 변경)
+     * 테스트 대상 객체 - 사용자 관리 서비스 (사용자 정보 조회, 수정, 삭제, 비밀번호 변경)
      * 
      * @InjectMocks: 모의 객체들을 주입받는 실제 객체
      */
@@ -94,7 +95,7 @@ public class UserServiceTest {
     private UserService userService;
 
     /**
-     * 테스트 대상 객체 - 사용자 서비스 (사용자 회원가입)
+     * 테스트 대상 객체 - 사용자 회원가입 서비스
      * 
      * @InjectMocks: 모의 객체들을 주입받는 실제 객체
      */

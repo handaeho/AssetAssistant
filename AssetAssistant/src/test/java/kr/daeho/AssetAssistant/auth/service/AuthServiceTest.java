@@ -57,6 +57,17 @@ import kr.daeho.AssetAssistant.security.JWTokenProvider;
  * 8. never(...): 모의(mock) 객체의 특정 메서드가 절대 호출되지 않아야 하는지 검증
  * -> public static <T> T never() { ... }
  * 
+ * 9. any(): 특정 메서드 호출 시 인자의 실제 값은 중요하지 않을 때, 그 자리에서 "어떤 값이든 상관없다"라고 지정
+ * -> 단, 타입은 정확하게 전달 되어야 함
+ * -> public static <T> T any(Class<T> type) { ... }
+ * 
+ * ex)
+ * when(userRepository.save(any(UserEntity.class))).thenReturn(testUserEntity);
+ * -> userRepository.save() 메서드가 호출될 때, UserEntity 타입을 가진 어떤 객체가 전달되더라도
+ * testUserEntity를 반환하도록 설정
+ * -> 인자의 타입만 지정하면, 실제 전달되는 값은 무시.
+ * -> 값의 구체적인 내용보다 메서드 호출 자체가 이루어졌는지, 그리고 호출 횟수 등을 검증할 때 유용
+ * 
  * [Given - when - Then: Behavior-Driven Development(BDD)의 테스트 시나리오 기술 패턴]
  * 1. Given: 테스트가 시작되기 전에 필요한 초기 상태나 조건을 설정하는 단계
  * -> DB에 특정 사용자 지정, 테스트 할 시스템의 환경 설정 등
