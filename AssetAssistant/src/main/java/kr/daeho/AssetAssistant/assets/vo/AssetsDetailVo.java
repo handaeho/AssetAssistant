@@ -60,7 +60,7 @@ public class AssetsDetailVo {
 
     /**
      * 자산 금액
-     * /**
+     *
      * String 타입의 자산 유형을 받는 정적 팩토리 메서드
      * 
      * @param assetsName     자산 이름

@@ -507,19 +507,6 @@ public class AssetsServiceTest {
         assetDetails.add(AssetsDetailVo.of("자산1", 1000, "주식"));
         assetDetails.add(AssetsDetailVo.of("자산2", 1000, "적금"));
 
-        // Entity 생성 및 금액 및 비율 계산 테스트를 위한 객체 준비
-        AssetsEntity assetsEntity = AssetsEntity.builder()
-                .userId(TEST_USER_ID)
-                .totalAssets(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
-                .totalIncome(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
-                .totalExpense(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
-                .incomeExpenseRatio(0) // 테스트를 위해 초기값 0 (자동 계산 될 값)
-                .incomes(incomes)
-                .expenses(expenses)
-                .assetDetails(assetDetails)
-                .assetsTypeRatios(new HashMap<>()) // 자동 계산 될 값
-                .build();
-
         // 총 금액 및 비율 계산 메서드를 직접 호출하기 위해 별도의 AssetsService 서비스 객체 생성
         AssetsService assetsService = new AssetsService(assetsRepository, modelMapper);
 
