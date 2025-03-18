@@ -37,14 +37,20 @@ public class AssetsDto {
     // 사용자 아이디 (식별자)
     private String userId;
 
-    // 전체 자산 금액 (예: 100만원)
+    // 전체 자산 금액 (예: 100만원) - 자동 계산됨
     private int totalAssets;
 
-    // 수입 정보 VO (불변 객체로, 수정 시 새 인스턴스 생성)
-    private IncomeVo income;
+    // 총 수입 금액 - 자동 계산됨
+    private int totalIncome;
 
-    // 지출 정보 VO (불변 객체로, 수정 시 새 인스턴스 생성)
-    private ExpenseVo expense;
+    // 총 지출 금액 - 자동 계산됨
+    private int totalExpense;
+
+    // 수입 정보 VO 리스트 (각 수입 항목별로 작성)
+    private List<IncomeVo> incomes;
+
+    // 지출 정보 VO 리스트 (각 지출 항목별로 작성)
+    private List<ExpenseVo> expenses;
 
     /**
      * 여러 자산 상세 정보를 저장하는 리스트

@@ -1,6 +1,8 @@
 package kr.daeho.AssetAssistant.assets.vo;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +25,7 @@ import lombok.EqualsAndHashCode;
  * @NoArgsConstructor: 기본 생성자를 자동으로 생성 (JPA에서 필수)
  * @AllArgsConstructor: 모든 필드를 매개변수로 하는 생성자를 자동으로 생성
  * @EqualsAndHashCode: equals()와 hashCode() 메서드를 자동으로 생성
- *                     VO는 값이 같으면 같은 객체로 취급하므로 필수
+ *                     VO는 값이 같으면 같은 객체로 취급하므로 필수 (값 객체의 동등성 비교를 위해 적용)
  */
 @Embeddable
 @Getter
@@ -41,14 +43,36 @@ public class AssetsDetailVo {
     /**
      * 자산 타입 (예: 주식, 예금, 적금, 부동산 등)
      * 자산의 종류를 구분하는 카테고리
+     * 
+     * @Enumerated: 열거형 타입을 데이터베이스 컬럼에 매핑
+     *              EnumType.STRING: 열거형 값을 문자열로 저장
+     *              (STOCK, SAVINGS_ACCOUNT, INSTALLMENT_SAVINGS, REAL_ESTATE,
+     *              CRYPTOCURRENCY, BOND, CASH, GOLD, OTHER)
      */
-    private String assetsType;
+    @Enumerated(EnumType.STRING)
+    private AssetType assetsType;
 
     /**
      * 자산 금액 (원 단위)
      * 해당 자산의 현재 평가 금액
      */
     private int assetsPrice;
+
+    /**
+     * String 타입의 자산 유형을 받는 정적 팩토리 메서드
+     * 
+     * @param assetsName     자산 이름
+     * @param assetsTypeCode 자산 유형 코드
+     * @param assetsPrice    자산 금액
+     * @return 생성된 AssetsDetailVo 객체
+     */
+    public static AssetsDetailVo of(String assetsName, String assetsTypeCode, int assetsPrice) {
+        return AssetsDetailVo.builder()
+                .assetsName(assetsName)
+                .assetsType(AssetType.fromCode(assetsTypeCode))
+                .assetsPrice(assetsPrice)
+                .build();
+    }
 
     /**
      * 자산 정보를 문자열로 반환

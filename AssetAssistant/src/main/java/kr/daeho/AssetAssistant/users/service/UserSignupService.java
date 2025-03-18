@@ -12,7 +12,6 @@ import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
-import kr.daeho.AssetAssistant.common.constant.ErrorCode;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 

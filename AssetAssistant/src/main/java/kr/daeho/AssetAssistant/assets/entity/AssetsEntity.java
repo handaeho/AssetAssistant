@@ -83,39 +83,54 @@ public class AssetsEntity {
     private double incomeExpenseRatio;
 
     /**
-     * 수입 정보 -> VO 객체를 사용하여 Embedded
-     * 
-     * @Embedded: 임베디드 타입 선언
-     * @AttributeOverrides: 임베디드 타입의 컬럼 매핑 재정의
-     *                      - Embedded로 다른 객체를 필드에 선언한 경우, 해당 엔티티에서는 다른 컬럼명을 쓰고 싶을 때
-     * @AttributeOverride: name = "부모클래스 필드명", column = @Column(name = "자식에서 쓸 컬럼명")
+     * 총 수입 금액
      */
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "incomeName", column = @Column(name = "income_name", nullable = false)),
-            @AttributeOverride(name = "incomeType", column = @Column(name = "income_type", nullable = false)),
-            @AttributeOverride(name = "incomeAmount", column = @Column(name = "income_amount", nullable = false))
-    })
-    private IncomeVo income;
+    @Column(name = "total_income", nullable = false)
+    private int totalIncome;
 
     /**
-     * 지출 정보 -> VO 객체를 사용하여 Embedded
-     * 
-     * @Embedded: 임베디드 타입 선언
-     * @AttributeOverrides: 임베디드 타입의 컬럼 매핑 재정의
-     *                      - Embedded로 다른 객체를 필드에 선언한 경우, 해당 엔티티에서는 다른 컬럼명을 쓰고 싶을 때
-     * @AttributeOverride: name = "부모클래스 필드명", column = @Column(name = "자식에서 쓸 컬럼명")
+     * 총 지출 금액
      */
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "fixedExpenseName", column = @Column(name = "fixed_expense_name", nullable = false)),
-            @AttributeOverride(name = "fixedExpenseType", column = @Column(name = "fixed_expense_type", nullable = false)),
-            @AttributeOverride(name = "fixedExpenseAmount", column = @Column(name = "fixed_expense_amount", nullable = false)),
-            @AttributeOverride(name = "variableExpenseName", column = @Column(name = "variable_expense_name", nullable = false)),
-            @AttributeOverride(name = "variableExpenseType", column = @Column(name = "variable_expense_type", nullable = false)),
-            @AttributeOverride(name = "variableExpenseAmount", column = @Column(name = "variable_expense_amount", nullable = false))
-    })
-    private ExpenseVo expense;
+    @Column(name = "total_expense", nullable = false)
+    private int totalExpense;
+
+    /**
+     * 수입 정보 목록
+     * 
+     * @ElementCollection(fetch = FetchType.EAGER): 값 타입 컬렉션을 매핑
+     *                          - 컬렉션을 즉시 로딩하여 N+1 문제 방지
+     *                          - 자산 비율 정보는 항상 함께 조회되므로 EAGER 로딩이 효율적
+     *                          - EAGER: 엔티티를 조회할 때, 해당 컬렉션도 함께 즉시 로딩
+     *                          - Lazy: 엔티티를 조회할 때, 해당 컬렉션을 지연 로딩
+     * @CollectionTable: 엔티티 클래스의 컬렉션 필드를 별도의 테이블에 저장
+     *                   - joinColumns: 조인 조건 정의
+     *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
+     *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
+     * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "incomes", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
+    @Builder.Default
+    private List<IncomeVo> incomes = new ArrayList<>();
+
+    /**
+     * 지출 정보 목록
+     * 
+     * @ElementCollection(fetch = FetchType.EAGER): 값 타입 컬렉션을 매핑
+     *                          - 컬렉션을 즉시 로딩하여 N+1 문제 방지
+     *                          - 자산 비율 정보는 항상 함께 조회되므로 EAGER 로딩이 효율적
+     *                          - EAGER: 엔티티를 조회할 때, 해당 컬렉션도 함께 즉시 로딩
+     *                          - Lazy: 엔티티를 조회할 때, 해당 컬렉션을 지연 로딩
+     * @CollectionTable: 엔티티 클래스의 컬렉션 필드를 별도의 테이블에 저장
+     *                   - joinColumns: 조인 조건 정의
+     *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
+     *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
+     * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "expenses", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
+    @Builder.Default
+    private List<ExpenseVo> expenses = new ArrayList<>();
 
     /**
      * 자산 유형별 비율을 저장하는 Map 컬렉션
@@ -123,19 +138,18 @@ public class AssetsEntity {
      * @ElementCollection(fetch = FetchType.EAGER): 값 타입 컬렉션을 매핑
      *                          - 컬렉션을 즉시 로딩하여 N+1 문제 방지
      *                          - 자산 비율 정보는 항상 함께 조회되므로 EAGER 로딩이 효율적
-     * @CollectionTable: 별도 테이블로 저장하여 유연한 확장성 확보
-     *                   - 자산 타입이 추가되어도 엔티티 구조 변경 불필요
-     *                   - name: 테이블 이름 지정
-     *                   - joinColumns: 외래 키로 사용할 컬럼 지정
+     *                          - EAGER: 엔티티를 조회할 때, 해당 컬렉션도 함께 즉시 로딩
+     *                          - Lazy: 엔티티를 조회할 때, 해당 컬렉션을 지연 로딩
+     * @CollectionTable: 엔티티 클래스의 컬렉션 필드를 별도의 테이블에 저장
+     *                   - joinColumns: 조인 조건 정의
+     *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
+     *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
      * @MapKeyColumn: Map의 key에 대한 컬럼 지정
      * @Column: Map의 value에 대한 컬럼 지정
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
-
-    // TODO: 여기 어노테이션들 모두 자세하게 파악하기
-
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "assets_type_ratios", joinColumns = @JoinColumn(name = "assets_id"))
+    @CollectionTable(name = "assets_type_ratios", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
     @MapKeyColumn(name = "asset_type")
     @Column(name = "ratio")
     @Builder.Default
@@ -146,18 +160,17 @@ public class AssetsEntity {
      * 
      * @ElementCollection(fetch = FetchType.EAGER): 값 타입 컬렉션을 매핑
      *                          - 컬렉션을 즉시 로딩하여 N+1 문제 방지
-     *                          - 자산 상세 정보는 항상 함께 조회되므로 EAGER 로딩이 효율적
-     * @CollectionTable: 별도 테이블로 저장하여 유연한 확장성 확보
-     *                   - 자산 타입이 추가되어도 엔티티 구조 변경 불필요
-     *                   - name: 테이블 이름 지정
-     *                   - joinColumns: 외래 키로 사용할 컬럼 지정
+     *                          - 자산 비율 정보는 항상 함께 조회되므로 EAGER 로딩이 효율적
+     *                          - EAGER: 엔티티를 조회할 때, 해당 컬렉션도 함께 즉시 로딩
+     *                          - Lazy: 엔티티를 조회할 때, 해당 컬렉션을 지연 로딩
+     * @CollectionTable: 엔티티 클래스의 컬렉션 필드를 별도의 테이블에 저장
+     *                   - joinColumns: 조인 조건 정의
+     *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
+     *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
-
-    // TODO: 여기 어노테이션들 모두 자세하게 파악하기
-
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "assets_details", joinColumns = @JoinColumn(name = "assets_id"))
+    @CollectionTable(name = "assets_details", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
     @Builder.Default
     private List<AssetsDetailVo> assetDetails = new ArrayList<>();
 
@@ -205,21 +218,27 @@ public class AssetsEntity {
     // VO 객체 업데이트 메소드 (불변 객체이므로, 새로운 인스턴스를 전달 (IncomeVo, ExpenseVo, AssetsDetailVo))
 
     /**
-     * 수입 업데이트 메소드
+     * 수입 목록 업데이트 메소드
      * 
-     * @param income 업데이트할 수입
+     * @param incomes 업데이트할 수입 목록
      */
-    public void updateIncome(IncomeVo income) {
-        this.income = income;
+    public void updateIncomes(List<IncomeVo> incomes) {
+        this.incomes.clear();
+        if (incomes != null) {
+            this.incomes.addAll(incomes);
+        }
     }
 
     /**
-     * 지출 업데이트 메소드
+     * 지출 목록 업데이트 메소드
      * 
-     * @param expense 업데이트할 지출
+     * @param expenses 업데이트할 지출 목록
      */
-    public void updateExpense(ExpenseVo expense) {
-        this.expense = expense;
+    public void updateExpenses(List<ExpenseVo> expenses) {
+        this.expenses.clear();
+        if (expenses != null) {
+            this.expenses.addAll(expenses);
+        }
     }
 
     /**
@@ -240,5 +259,23 @@ public class AssetsEntity {
     public void updateAssetDetails(List<AssetsDetailVo> assetDetails) {
         this.assetDetails.clear();
         this.assetDetails.addAll(assetDetails);
+    }
+
+    /**
+     * 총 수입 업데이트 메소드
+     * 
+     * @param totalIncome 업데이트할 총 수입 금액
+     */
+    public void updateTotalIncome(int totalIncome) {
+        this.totalIncome = totalIncome;
+    }
+
+    /**
+     * 총 지출 업데이트 메소드
+     * 
+     * @param totalExpense 업데이트할 총 지출 금액
+     */
+    public void updateTotalExpense(int totalExpense) {
+        this.totalExpense = totalExpense;
     }
 }

@@ -71,13 +71,18 @@ public class ModelMapper {
             return null;
 
         return AssetsDto.builder()
+                .id(entity.getId())
                 .userId(entity.getUserId())
                 .totalAssets(entity.getTotalAssets())
-                .income(entity.getIncome())
-                .expense(entity.getExpense())
+                .totalIncome(entity.getTotalIncome())
+                .totalExpense(entity.getTotalExpense())
+                .incomes(entity.getIncomes())
+                .expenses(entity.getExpenses())
                 .assetDetails(entity.getAssetDetails())
                 .assetsTypeRatios(entity.getAssetsTypeRatios())
                 .incomeExpenseRatio(entity.getIncomeExpenseRatio())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
@@ -91,8 +96,10 @@ public class ModelMapper {
         return AssetsEntity.builder()
                 .userId(dto.getUserId())
                 .totalAssets(dto.getTotalAssets())
-                .income(dto.getIncome())
-                .expense(dto.getExpense())
+                .totalIncome(dto.getTotalIncome())
+                .totalExpense(dto.getTotalExpense())
+                .incomes(dto.getIncomes())
+                .expenses(dto.getExpenses())
                 .assetDetails(dto.getAssetDetails())
                 .assetsTypeRatios(dto.getAssetsTypeRatios())
                 .incomeExpenseRatio(dto.getIncomeExpenseRatio())

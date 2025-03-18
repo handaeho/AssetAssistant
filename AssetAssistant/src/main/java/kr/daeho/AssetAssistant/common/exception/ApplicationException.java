@@ -137,6 +137,10 @@ public class ApplicationException extends RuntimeException {
         public AssetsNotFoundException(String userId) {
             super(ErrorCode.ASSETS_NOT_FOUND, String.format("자산 정보를 찾을 수 없습니다.: %s", userId));
         }
+
+        public AssetsNotFoundException(String userId, Throwable cause) {
+            super(ErrorCode.ASSETS_NOT_FOUND, String.format("자산 정보를 찾을 수 없습니다.: %s", userId), cause);
+        }
     }
 
     /**
