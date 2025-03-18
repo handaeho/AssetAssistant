@@ -448,6 +448,9 @@ public class AssetsServiceTest {
     @Test
     @DisplayName("자산 정보 업데이트 실패 - 자산 정보 없음")
     void updateAssets_NotFound() {
+        // Given - 자산 정보 업데이트 실패 테스트 준비
+        // 사용자 아이디에 해당하는 자산 정보가 없음
+        when(assetsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.empty());
 
     }
 }
