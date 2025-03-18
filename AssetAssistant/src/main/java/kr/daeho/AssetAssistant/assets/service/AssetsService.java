@@ -422,13 +422,13 @@ public class AssetsService implements AssetsInterfaces {
      * "assetDetails": [
      * {
      * "assetsName": "삼성전자",
+     * "assetsPrice": 500000,
      * "assetsType": "주식",
-     * "assetsPrice": 500000
      * },
      * {
      * "assetsName": "국민은행적금",
+     * "assetsPrice": 500000,
      * "assetsType": "적금",
-     * "assetsPrice": 500000
      * }
      * ]
      * }
