@@ -457,5 +457,27 @@ public class AssetsServiceTest {
             assetsService.updateAssets(TEST_USER_ID, testAssetsDto);
         }, "자산 정보가 없는 경우 AssetsNotFoundException이 발생해야 함.");
 
+        // 사용자 아이디에 해당하는 자산 정보 조회 리포지토리 호출 검증
+        verify(assetsRepository).findByUserId(TEST_USER_ID);
+        // 자산 저장을 위한 리포지토리가 호출되지 않았는지 검증
+        verify(assetsRepository, never()).save(any());
+    }
+
+    /**
+     * 자산 정보 삭제 테스트 - 성공 케이스
+     * 
+     * 시나리오: 사용자 아이디에 해당하는 자산 정보를 삭제
+     * 
+     * @Test: 테스트 메소드 표시
+     * @DisplayName: 테스트 목적을 명시적으로 표시 및 출력
+     */
+    @Test
+    @DisplayName("자산 정보 삭제 성공")
+    void deleteAssets_Success() {
+        // When - assetsService의 deleteAssets 메소드로 자산 정보 삭제 테스트 실행
+        assetsService.deleteAssets(TEST_USER_ID);
+
+        // Then - 사용자 아이디에 해당하는 자산 정보 삭제 리포지토리 호출 검증
+        verify(assetsRepository).deleteByUserId(TEST_USER_ID);
     }
 }
