@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,7 +39,7 @@ public class JWTokenProvider {
      * 
      * @Value: application.properties에서 주입받은 값을 필드에 할당
      */
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret-key}")
     private String secretKey;
 
     /**
@@ -46,7 +47,7 @@ public class JWTokenProvider {
      * 
      * @Value: application.properties에서 주입받은 값을 필드에 할당
      */
-    @Value("${jwt.access-token-expiration-time}")
+    @Value("${jwt.token.expiration-time}")
     private long accessTokenValidity;
 
     /**
@@ -54,7 +55,7 @@ public class JWTokenProvider {
      * 
      * @Value: application.properties에서 주입받은 값을 필드에 할당
      */
-    @Value("${jwt.refresh-token-expiration-time}")
+    @Value("${jwt.refresh-token.expiration-time}")
     private long refreshTokenValidity;
 
     /**
@@ -65,11 +66,18 @@ public class JWTokenProvider {
     private final SecurityUserDetailService userDetailsService;
 
     /**
-     * SecurityUserDetailService 생성자 주입
+     * JWTokenProvider 객체가 생성될 때, 필요한 의존성(토큰 서명용 비밀키, 사용자 정보 서비스)을 전달받아 내부 필드를 초기화
      * 
-     * @param userDetailsService 사용자 상세 정보 서비스
+     * @Autowired: 스프링 컨테이너에서 필요한 의존성 자동 주입
+     * @Value: application.properties에서 주입받은 값을 필드에 할당
+     * @param userDetailsService 사용자 상세 정보 커스텀 서비스 (인증 세부정보 로드)
      */
-    public JWTokenProvider(SecurityUserDetailService userDetailsService) {
+    @Autowired
+    public JWTokenProvider(@Value("${jwt.secret-key}") String secretKey, SecurityUserDetailService userDetailsService) {
+        // JWT 생성 및 검증 시 필요한 비밀키 할당
+        this.secretKey = secretKey;
+
+        // JWT 토큰 검증 시 필요한 사용자 상세 정보 로드 서비스 할당
         this.userDetailsService = userDetailsService;
     }
 

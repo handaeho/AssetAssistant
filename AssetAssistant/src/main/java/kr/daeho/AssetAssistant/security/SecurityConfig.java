@@ -12,6 +12,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
 /**
  * Spring Security 설정 클래스
@@ -48,6 +50,24 @@ public class SecurityConfig {
      * JWT 토큰 제공자 주입
      */
     private final JWTokenProvider tokenProvider;
+
+    /**
+     * AuthenticationManager 빈을 Spring 컨테이너에 등록
+     * 
+     * AuthService에서 필요로 하는 authenticationManager의 의존성 주입 수행
+     * 
+     * AuthenticationManager: 인증(Username/Password 등)을 처리하는 핵심 인터페이스
+     * 
+     * @param authenticationConfiguration: AuthenticationManager를 생성하거나 가져오는 설정 정보
+     * @return AuthenticationManager 객체
+     * @throws Exception 예외 발생 시 처리
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+        // authenticationConfiguration 객체를 통해 실제 AuthenticationManager 인스턴스를 가져와서 반환
+        return authenticationConfiguration.getAuthenticationManager();
+    }
 
     /**
      * 보안 필터 체인 설정
