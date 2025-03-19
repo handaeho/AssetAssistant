@@ -48,7 +48,7 @@ spring:
     password: ENC(iloHwNyW04A9kiX/4omr1H5O+0O1WUxTqFm4QO3ujjL1Ly5n6ddGtkZSM8Q5fO1K)
   jpa:
     hibernate:
-      ddl-auto: validate # update(테이블 자동생성), validate(생성 없이 검증만)
+      ddl-auto: validate # update(테이블 자동생성), validate(생성 없이 검증만), create-drop (테이블 생성 후 기존 삭제)
     show-sql: false
     properties:
       hibernate:

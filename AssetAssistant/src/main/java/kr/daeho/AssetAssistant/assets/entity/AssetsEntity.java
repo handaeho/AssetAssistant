@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import kr.daeho.AssetAssistant.assets.vo.*;
 
@@ -144,12 +146,15 @@ public class AssetsEntity {
      *                   - joinColumns: 조인 조건 정의
      *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
      *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
+     *                   - uniqueConstraints: 유니크 제약조건 정의
+     *                   -> user_id, asset_type: 동일한 사용자가 동일한 자산 타입 등록 방지
      * @MapKeyColumn: Map의 key에 대한 컬럼 지정
      * @Column: Map의 value에 대한 컬럼 지정
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "assets_type_ratios", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
+    @CollectionTable(name = "assets_type_ratios", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"), uniqueConstraints = @UniqueConstraint(columnNames = {
+            "user_id", "asset_type" }))
     @MapKeyColumn(name = "asset_type")
     @Column(name = "ratio")
     @Builder.Default
@@ -167,30 +172,37 @@ public class AssetsEntity {
      *                   - joinColumns: 조인 조건 정의
      *                   - name: 이 테이블에 있는 외래 키 컬럼의 이름
      *                   - referencedColumnName: 메인 테이블에서 참조할 컬럼 이름
+     *                   - uniqueConstraints: 유니크 제약조건 정의
+     *                   -> user_id, assets_name: 동일한 사용자가 동일한 자산 이름 등록 방지
      * @Builder.Default: 빌더 패턴 사용 시, 기본값 지정 (null 대신 빈 컬렉션으로 초기화)
      */
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "assets_details", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
+    @CollectionTable(name = "assets_details", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"), uniqueConstraints = @UniqueConstraint(columnNames = {
+            "user_id", "assets_name" }))
     @Builder.Default
     private List<AssetsDetailVo> assetDetails = new ArrayList<>();
 
     /**
      * 자산 정보 생성일
      * 
+     * @CreationTimestamp: 엔티티 생성 시 자동으로 현재 시간 설정
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     /**
      * 자산 정보 수정일
      * 
+     * @UpdateTimestamp: 엔티티 수정 시 자동으로 현재 시간 설정
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
      */
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

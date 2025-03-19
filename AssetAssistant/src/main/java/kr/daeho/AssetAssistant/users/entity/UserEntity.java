@@ -119,8 +119,11 @@ public class UserEntity implements UserDetails {
      * 
      * @Enumerated: 열거형(Enum) 타입 매핑
      *              - EnumType.STRING: 열거형 타입의 이름을 문자열로 저장
+     * @Column: 테이블의 컬럼과 매핑
+     *          - length: 컬럼 길이 지정
      */
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private UserRoleEnum role;
 
     /**

@@ -64,7 +64,7 @@ public class UserSignupService implements UserSignupInterfaces {
                 .userId(signupRequestDto.getUserId())
                 .userPassword(encodedPassword)
                 .userName(signupRequestDto.getUserName())
-                .role(UserRoleEnum.ROLE_USER)
+                .role(UserRoleEnum.USER)
                 .build();
 
         // 사용자 저장

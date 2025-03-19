@@ -1,0 +1,87 @@
+<주의>
+1. URL에서 사용자 ID는 중괄호 없이 직접 입력해야 합니다 (예: /api/assets/create/testuser1).
+
+2. Enum 값은 반드시 대문자로 된 영문 코드를 사용해야 합니다:
+수입/지출 유형: FIXED, VARIABLE
+자산 유형: STOCK, SAVINGS_ACCOUNT, INSTALLMENT_SAVINGS, REAL_ESTATE, CRYPTOCURRENCY, BOND, CASH, GOLD, OTHER
+
+3. 로그인 후 받은 토큰을 자산 등록 API 호출 시 Authorization 헤더에 포함해야 합니다. (예: Authorization: Bearer {로그인에서 받은 accessToken})
+
+==============================================
+
+1. 회원가입 테스트
+요청 정보
+메소드: POST
+URL: http://localhost:8080/api/users/signup
+헤더: Content-Type: application/json
+바디:
+{
+  "userId": "testuser1",
+  "password": "Test123!@#",
+  "userName": "테스트사용자"
+}
+
+2. 로그인 테스트
+요청 정보
+메소드: POST
+URL: http://localhost:8080/api/auth/login
+헤더: Content-Type: application/json
+바디(JSON):
+{
+  "userId": "testuser1",
+  "password": "Test123!@#"
+}
+
+3. 자산 등록 테스트
+요청 정보
+메소드: POST
+URL: http://localhost:8080/api/assets/create/testuser1
+URL에 실제 사용자 ID를 직접 입력해야 함 (중괄호 없이)
+헤더:
+Content-Type: application/json
+Authorization: Bearer {로그인에서 받은 accessToken}
+바디(JSON):
+{
+  "userId": "testuser1",
+  "incomes": [
+    {
+      "incomeName": "월급",
+      "incomeAmount": 3000000,
+      "incomeType": "FIXED"
+    },
+    {
+      "incomeName": "이자수익",
+      "incomeAmount": 50000,
+      "incomeType": "VARIABLE"
+    }
+  ],
+  "expenses": [
+    {
+      "expenseName": "월세",
+      "expenseAmount": 500000,
+      "expenseType": "FIXED"
+    },
+    {
+      "expenseName": "식비",
+      "expenseAmount": 300000,
+      "expenseType": "VARIABLE"
+    }
+  ],
+  "assetDetails": [
+    {
+      "assetsName": "삼성전자 주식",
+      "assetsPrice": 5000000,
+      "assetsType": "STOCK"
+    },
+    {
+      "assetsName": "국민은행 적금",
+      "assetsPrice": 10000000,
+      "assetsType": "INSTALLMENT_SAVINGS"
+    },
+    {
+      "assetsName": "현금",
+      "assetsPrice": 1000000,
+      "assetsType": "CASH"
+    }
+  ]
+}
