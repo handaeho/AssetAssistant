@@ -2,6 +2,11 @@ spring:
   profiles:
     active: dev
 
+jasypt:
+  encryptor:
+    bean: jasyptEncryptorAES
+    # 이 설정은 모든 프로필에 적용됨
+    
 ---
 # 개발 환경
 spring:
@@ -31,25 +36,30 @@ logging:
     org.springframework: INFO
 
 ---
-# TODO: 운영 환경 DB 관련 정보 암호화 필요
 # 운영 환경
 spring:
   config:
     activate:
       on-profile: prod
   datasource:
-    url: jdbc:mysql://localhost:3306/asset_assistant?allowPublicKeyRetrieval=true&useSSL=false
+    url: ENC(1Bw/bQ9LYpv/V9BahclTW22shDU4U8TT04avTOLgbi1o7g3scLF4HW7W6VMAKfWPGmP7HMxmchYAcBjyxV27669hnZPLskow8Dvk+U4/NfgceHOIHF/3C7ABvr+TajVqUQ2MQCpkClCZA4+Nlxqd4FeAmSW0sOyW1w+NNryE0JA=)
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: "!gaion3413"
+    username: ENC(HyjrSlDlyRTHgfnHG5PYJGHDdxxCElstnUEfi2GpLVR5ahbzHUkguVQQs8YX5ruV)
+    password: ENC(iloHwNyW04A9kiX/4omr1H5O+0O1WUxTqFm4QO3ujjL1Ly5n6ddGtkZSM8Q5fO1K)
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: validate # update(테이블 자동생성), validate(생성 없이 검증만)
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect # hibernate에서 MySQL 문법 사용 설정
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
-  token-validity-in-seconds: 86400
+  secret-key: ENC(FuGrdANoU4Eg5wIvixMLRkiqfyVb56PvwxkOcVhtKVAmXn1fALpAPTiPjyUrJoP6dDrbuGcbAod21rIbSg20cf17BB6Is33iq9aCFGldZ+81Movk+jTxV7BSkEm+aZlrJq4zguEnR9eI9E1LLCGLgQ==)
+  token:
+    expiration-time: 3600000  # 1시간 (밀리초 단위)
+  refresh-token:
+    expiration-time: 604800000  # 7일 (밀리초 단위)
 
 logging:
   level:

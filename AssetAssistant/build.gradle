@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.2'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'application'
 }
 
 group = 'kr.daeho'
@@ -32,9 +33,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'jakarta.platform:jakarta.jakartaee-web-api:8.0.0'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5' // 설정 파일 속성 암호화 라이브러리
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
@@ -46,6 +49,30 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// 테스트 실행 설정
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// 자바 컴파일 시 인코딩 설정
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// 문자열 암호화 유틸리티 실행을 위한 gradle 태스크 설정
+task encryptValue(type: JavaExec) {
+    description = '지정한 값을 암호화합니다.'
+    mainClass = 'kr.daeho.AssetAssistant.common.utils.JasyptRunner'
+    classpath = sourceSets.main.runtimeClasspath
+    
+    // 명령줄 인자를 gradle 속성으로 전달받음
+    if (project.hasProperty('value')) {
+        args project.property('value')
+        
+        if (project.hasProperty('key')) {
+            args project.property('key')
+        }
+    } else {
+        println "설정 변수 암호화 사용법: ./gradlew encryptValue -Pvalue=암호화할_값 [-Pkey=마스터_키]"
+    }
 }

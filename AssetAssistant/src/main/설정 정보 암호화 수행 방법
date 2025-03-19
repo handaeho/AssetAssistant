@@ -1,0 +1,9 @@
+1. Gradle 태스크로 문자열 암호화 수행 (DB URL, 아이디, 패스워드 등)
+-> .\gradlew encryptValue -Pvalue="your-value-to-encrypt" -Pkey="your-secure-master-key"
+
+2. 암호화된 문자열을 application.yml에 적용 
+-> ENC(암호화된 문자열) 형식
+
+3. 애플리케이션 실행할 때, 커맨드라인 파라미터로 마스터 키 제공 (설정 파일에서 마스터 키로 복호화)
+-> java -jar .\build\libs\AssetAssistant-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod --jasypt.master.key=your-secure-master-key (jar 파일로 실행 시)
+-> ./gradlew bootRun --args="--spring.profiles.active=prod --jasypt.master.key=your-secure-master-key" (gradle 태스크로 실행 시)
