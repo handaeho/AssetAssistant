@@ -51,8 +51,8 @@ public class UserController extends BaseController {
      * @param userId 아이디
      * @return 중복 여부
      */
-    @GetMapping("/check-id")
-    public ResponseEntity<ApiResponse<CheckIdResponseDto>> checkIdDuplicate(@RequestParam String userId) {
+    @GetMapping("/check-id-duplicate")
+    public ResponseEntity<ApiResponse<CheckIdResponseDto>> checkIdDuplicate(@RequestParam("userId") String userId) {
         try {
             boolean isDuplicate = userSignupInterfaces.isUserIdDuplicate(userId);
             return ResponseEntity.ok(ApiResponse.success(

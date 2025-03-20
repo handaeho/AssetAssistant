@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
+import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 import kr.daeho.AssetAssistant.assets.dto.AssetsDto;
 import kr.daeho.AssetAssistant.assets.entity.AssetsEntity;
 
@@ -42,6 +43,7 @@ public class ModelMapper {
                 .userName(userEntity.getUsername())
                 .userAge(userEntity.getUserAge())
                 .userJob(userEntity.getUserJob())
+                .userBirthDate(userEntity.getUserBirthDate())
                 .userUpdatedAt(userEntity.getUserUpdatedAt())
                 .build();
     }
@@ -57,10 +59,72 @@ public class ModelMapper {
         return UserEntity.builder()
                 .userId(userDto.getUserId())
                 .userName(userDto.getUserName())
-                .userAge(userDto.getUserAge())
                 .userJob(userDto.getUserJob())
+                .userBirthDate(userDto.getUserBirthDate())
                 .userUpdatedAt(userDto.getUserUpdatedAt())
                 .build();
+    }
+
+    /**
+     * UserEntity 목록을 UserDto 목록으로 변환
+     */
+    public List<UserDto> toUserDtoList(List<UserEntity> userEntities) {
+        if (userEntities == null) {
+            return null;
+        }
+
+        return userEntities.stream()
+                .map(this::toUserDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 기존 UserEntity에 UserDto 데이터를 적용해 업데이트
+     */
+    public void updateUserEntityFromDto(UserEntity entity, UserDto dto) {
+        if (entity == null || dto == null) {
+            return;
+        }
+
+        // null이 아닌 필드만 업데이트
+
+        // 사용자 이름 업데이트
+        if (dto.getUserName() != null) {
+            entity.updateUserName(dto.getUserName());
+        }
+
+        // 사용자 직업 업데이트
+        if (dto.getUserJob() != null) {
+            entity.updateUserJob(dto.getUserJob());
+        }
+
+        // 사용자 생년월일에서 나이 자동 계산
+        if (dto.getUserBirthDate() != null) {
+            entity.setUserBirthDate(dto.getUserBirthDate());
+        }
+    }
+
+    /**
+     * SignUpRequestDto를 UserEntity로 변환
+     */
+    public UserEntity signUpRequestToUserEntity(SignupRequestDto signupRequestDto, String encodedPassword) {
+        if (signupRequestDto == null) {
+            return null;
+        }
+
+        // 기본 필드를 포함한 UserEntity 생성
+        UserEntity userEntity = UserEntity.builder()
+                .userId(signupRequestDto.getUserId())
+                .userPassword(encodedPassword)
+                .userName(signupRequestDto.getUserName())
+                .userJob(signupRequestDto.getUserJob())
+                .role(UserRoleEnum.USER)
+                .build();
+
+        // 사용자 생년월일에서 나이 자동 계산
+        userEntity.setUserBirthDate(signupRequestDto.getUserBirthDate());
+
+        return userEntity;
     }
 
     /**
@@ -104,55 +168,6 @@ public class ModelMapper {
                 .assetsTypeRatios(dto.getAssetsTypeRatios())
                 .incomeExpenseRatio(dto.getIncomeExpenseRatio())
                 .build();
-    }
-
-    /**
-     * SignUpRequestDto를 UserEntity로 변환
-     */
-    public UserEntity signUpRequestToUserEntity(SignupRequestDto signupRequestDto) {
-        if (signupRequestDto == null) {
-            return null;
-        }
-
-        return UserEntity.builder()
-                .userId(signupRequestDto.getUserId())
-                .userName(signupRequestDto.getUserName())
-                .build();
-    }
-
-    /**
-     * UserEntity 목록을 UserDto 목록으로 변환
-     */
-    public List<UserDto> toUserDtoList(List<UserEntity> userEntities) {
-        if (userEntities == null) {
-            return null;
-        }
-
-        return userEntities.stream()
-                .map(this::toUserDto)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 기존 UserEntity에 UserDto 데이터를 적용해 업데이트
-     */
-    public void updateUserEntityFromDto(UserEntity entity, UserDto dto) {
-        if (entity == null || dto == null) {
-            return;
-        }
-
-        // null이 아닌 필드만 업데이트
-        if (dto.getUserName() != null) {
-            entity.updateUserName(dto.getUserName());
-        }
-
-        if (dto.getUserAge() != 0) {
-            entity.updateUserAge(dto.getUserAge());
-        }
-
-        if (dto.getUserJob() != null) {
-            entity.updateUserJob(dto.getUserJob());
-        }
     }
 
     // NOTE: 다른 변환 메서드들 추가 해가면서 작성

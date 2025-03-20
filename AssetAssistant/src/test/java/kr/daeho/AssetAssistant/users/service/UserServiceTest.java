@@ -25,7 +25,7 @@ import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
-import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.users.repository.UserRepository;
 import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 
 /**
@@ -108,7 +108,7 @@ public class UserServiceTest {
      * @Mock: 실제 동작을 흉내내는 가짜 객체
      */
     @Mock
-    private UserReposiory userRepository;
+    private UserRepository userRepository;
 
     /**
      * 모의 객체 - 비밀번호 인코더 (사용자 입력 비밀번호 암호화)

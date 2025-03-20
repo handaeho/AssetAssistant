@@ -3,9 +3,11 @@ package kr.daeho.AssetAssistant.users.entity;
 import java.util.Collection;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -88,9 +90,21 @@ public class UserEntity implements UserDetails {
      * @Column: 테이블의 컬럼과 매핑
      *          - name: 컬럼명
      *          - nullable: 널 가능 여부
+     * @Default: 빌더 패턴에서 기본값 설정
      */
     @Column(name = "user_age", nullable = true)
-    private int userAge;
+    @Default
+    private Integer userAge = 0;
+
+    /**
+     * 사용자 생년월일
+     * 
+     * @Column: 테이블의 컬럼과 매핑
+     *          - name: 컬럼명
+     *          - nullable: 널 가능 여부
+     */
+    @Column(name = "user_birth_date", nullable = true)
+    private LocalDate userBirthDate;
 
     /**
      * 사용자 직업
@@ -121,10 +135,12 @@ public class UserEntity implements UserDetails {
      *              - EnumType.STRING: 열거형 타입의 이름을 문자열로 저장
      * @Column: 테이블의 컬럼과 매핑
      *          - length: 컬럼 길이 지정
+     * @Default: 빌더 패턴에서 기본값 설정
      */
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private UserRoleEnum role;
+    @Default
+    private UserRoleEnum role = UserRoleEnum.USER;
 
     /**
      * 사용자 이름 정보 업데이트
@@ -145,21 +161,69 @@ public class UserEntity implements UserDetails {
     }
 
     /**
-     * 사용자 나이 업데이트
-     * 
-     * @param userAge: 업데이트할 사용자 나이
-     */
-    public void updateUserAge(int userAge) {
-        this.userAge = userAge;
-    }
-
-    /**
      * 사용자 직업 업데이트
      * 
      * @param userJob: 업데이트할 사용자 직업
      */
     public void updateUserJob(String userJob) {
         this.userJob = userJob;
+    }
+
+    /**
+     * 사용자 나이 업데이트
+     * 
+     * @param userAge: 업데이트할 사용자 나이
+     */
+    public void updateUserAge(Integer userAge) {
+        this.userAge = userAge;
+    }
+
+    /**
+     * 사용자 생년월일 설정 및 나이 자동 계산
+     * 
+     * @param userBirthDate: 설정할 사용자 생년월일
+     */
+    public void setUserBirthDate(LocalDate userBirthDate) {
+        this.userBirthDate = userBirthDate;
+        calculateAndUpdateAge();
+    }
+
+    /**
+     * 생년월일을 기반으로 나이 자동 계산 및 업데이트
+     */
+    private void calculateAndUpdateAge() {
+        try {
+            if (this.userBirthDate != null) {
+                LocalDate today = LocalDate.now();
+                int currentYear = today.getYear();
+                int birthYear = this.userBirthDate.getYear();
+
+                // 유효하지 않은 생년월일 체크 (미래 날짜)
+                if (this.userBirthDate.isAfter(today)) {
+                    this.userAge = 0; // 기본값으로 설정
+                    return;
+                }
+
+                // 기본 나이 계산 (현재 연도 - 생년 연도)
+                this.userAge = currentYear - birthYear;
+
+                // 생일이 지나지 않았으면 나이 1살 차감
+                if (today.getDayOfYear() < this.userBirthDate.withYear(currentYear).getDayOfYear()) {
+                    this.userAge--;
+                }
+
+                // 너무 오래된 생년월일이나 음수 나이 방지
+                if (this.userAge < 0 || this.userAge > 150) {
+                    this.userAge = 0; // 기본값으로 설정
+                }
+            } else {
+                // 생년월일이 없으면 나이도 null로 설정
+                this.userAge = null;
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 기본값 설정
+            this.userAge = 0;
+        }
     }
 
     // UserDetails 인터페이스 구현부

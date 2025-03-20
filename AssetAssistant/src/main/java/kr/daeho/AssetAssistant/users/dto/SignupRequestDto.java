@@ -1,8 +1,11 @@
 package kr.daeho.AssetAssistant.users.dto;
 
+import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +30,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SignupRequestDto {
-    // DB에서 사용되는 고유식별자(ID)
-    private Long id;
-
     // 사용자 아이디 (식별자)
     @NotBlank(message = "사용자 아이디 - 필수 항목")
     @Size(min = 4, max = 16, message = "사용자 아이디 - 4자 이상 16자 이하")
@@ -45,4 +45,13 @@ public class SignupRequestDto {
     @NotBlank(message = "사용자 이름 - 필수 항목")
     @Size(min = 2, max = 10, message = "사용자 이름 - 2자 이상 10자 이하")
     private String userName;
+
+    // 사용자 생년월일
+    @NotNull(message = "사용자 생년월일 - 필수 항목")
+    @Past(message = "생년월일은 현재보다 과거여야 합니다")
+    private LocalDate userBirthDate;
+
+    // 사용자 직업
+    @Size(max = 20, message = "사용자 직업 - 20자 이하")
+    private String userJob;
 }
