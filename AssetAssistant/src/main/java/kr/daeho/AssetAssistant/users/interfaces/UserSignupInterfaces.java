@@ -17,6 +17,14 @@ import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
  */
 public interface UserSignupInterfaces {
     /**
+     * 아이디 중복 체크
+     * 
+     * @param userId 아이디
+     * @return 중복 여부
+     */
+    boolean isUserIdDuplicate(String userId);
+
+    /**
      * 사용자 생성 (회원가입)
      * 
      * @param signUpRequestDto 회원가입 요청 정보

@@ -154,7 +154,7 @@ public class UserServiceTest {
                 .userAge(TEST_USER_AGE) // 사용자 나이
                 .userJob(TEST_USER_JOB) // 사용자 직업
                 .userUpdatedAt(LocalDateTime.now()) // 사용자 정보 수정일
-                .role(UserRoleEnum.ROLE_USER) // 사용자 역할
+                .role(UserRoleEnum.USER) // 사용자 역할
                 .build();
 
         // 테스트용 사용자 DTO 생성

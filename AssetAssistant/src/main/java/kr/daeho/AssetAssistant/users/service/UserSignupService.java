@@ -12,7 +12,6 @@ import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
-import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 
 /**
@@ -39,22 +38,26 @@ public class UserSignupService implements UserSignupInterfaces {
     private final ModelMapper modelMapper; // 엔티티와 DTO 간 변환을 위한 모델 매퍼
 
     /**
+     * 아이디 중복 체크
+     * 
+     * @param userId 아이디
+     * @return 중복 여부
+     */
+    @Override
+    public boolean isUserIdDuplicate(String userId) {
+        return userRepository.existsByUserId(userId);
+    }
+
+    /**
      * 사용자 회원가입
      * 
      * @param signupRequestDto 사용자 회원가입 요청 DTO
-     * @return UserDto
-     * @throws ApplicationExceptions.UserNotFoundException 사용자를 찾을 수 없는 경우
+     * @return UserDto 사용자 정보 DTO
      */
     @Override
     @Transactional
     public UserDto signup(SignupRequestDto signupRequestDto) {
         log.info("사용자 회원가입 요청 처리: {}", signupRequestDto.getUserId());
-
-        // 사용자 아이디 중복 체크
-        if (userRepository.existsByUserId(signupRequestDto.getUserId())) {
-            log.error("사용자 아이디 중복: {}", signupRequestDto.getUserId());
-            throw new ApplicationException.UserAlreadyExistsException(signupRequestDto.getUserId());
-        }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());

@@ -47,6 +47,15 @@ public class ApplicationException extends RuntimeException {
     }
 
     /**
+     * 내부 서버 오류 시 발생하는 예외
+     */
+    public static class InternalServerErrorException extends ApplicationException {
+        public InternalServerErrorException(String message, Throwable cause) {
+            super(ErrorCode.INTERNAL_ERROR, message, cause);
+        }
+    }
+
+    /**
      * 사용자를 찾을 수 없을 때 발생하는 예외
      */
     public static class UserNotFoundException extends ApplicationException {

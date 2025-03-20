@@ -12,6 +12,8 @@ import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
 import kr.daeho.AssetAssistant.users.interfaces.UserSignupInterfaces;
 import kr.daeho.AssetAssistant.common.controller.BaseController;
 import kr.daeho.AssetAssistant.common.dto.ApiResponse;
+import kr.daeho.AssetAssistant.users.dto.CheckIdResponseDto;
+import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**
  * 사용자 컨트롤러 -> 사용자 정보를 조회, 등록, 수정, 삭제 기능 제공
@@ -42,6 +44,26 @@ public class UserController extends BaseController {
     // @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
     private final UserInterfaces userInterfaces;
     private final UserSignupInterfaces userSignupInterfaces;
+
+    /**
+     * 아이디 중복 체크
+     * 
+     * @param userId 아이디
+     * @return 중복 여부
+     */
+    @GetMapping("/check-id")
+    public ResponseEntity<ApiResponse<CheckIdResponseDto>> checkIdDuplicate(@RequestParam String userId) {
+        try {
+            boolean isDuplicate = userSignupInterfaces.isUserIdDuplicate(userId);
+            return ResponseEntity.ok(ApiResponse.success(
+                    new CheckIdResponseDto(isDuplicate),
+                    isDuplicate ? "이미 사용 중인 아이디입니다." : "사용 가능한 아이디입니다."));
+        } catch (Exception ex) {
+            // 명시적으로 예외 발생 시 GlobalExceptionHandler로 예외 전파
+            throw new ApplicationException.InternalServerErrorException(
+                    "아이디 중복 체크 중 서버에서 오류가 발생했습니다.", ex);
+        }
+    }
 
     /**
      * 회원 가입 처리
