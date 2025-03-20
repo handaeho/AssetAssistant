@@ -3,13 +3,12 @@ package kr.daeho.AssetAssistant.users.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
 import kr.daeho.AssetAssistant.users.interfaces.UserInterfaces;
-import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.users.repository.UserRepository;
 import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
@@ -35,8 +34,8 @@ import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 @Slf4j
 public class UserService implements UserInterfaces {
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
-    private final UserReposiory userRepository; // 사용자 정보 저장을 위한 리포지토리
-    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화를 위한 패스워드 인코더
+    private final UserRepository userRepository; // 사용자 정보 저장을 위한 리포지토리
+    private final UserSecurityService userSecurityService; // 사용자 보안 관련 로직을 위한 서비스
     private final ModelMapper modelMapper; // 엔티티와 DTO 간 변환을 위한 모델 매퍼
 
     /**
@@ -71,7 +70,7 @@ public class UserService implements UserInterfaces {
     @Override
     @Transactional
     public UserDto updateUser(String userId, UserDto userDto) {
-        log.info("사용자 정보 수정: {}", userId);
+        log.info("사용자 정보 수정 요청: {}", userId);
 
         // 사용자 정보 조회 - 없으면 UserNotFoundException 발생
         UserEntity userEntity = userRepository.findByUserId(userId)
@@ -79,7 +78,11 @@ public class UserService implements UserInterfaces {
 
         // ModelMapper를 사용해 엔티티 업데이트 (null이 아닌 필드만)
         modelMapper.updateUserEntityFromDto(userEntity, userDto);
+
+        // 저장
         userRepository.save(userEntity);
+
+        log.info("사용자 정보 수정 완료: {}", userId);
 
         return modelMapper.toUserDto(userEntity);
     }
@@ -134,14 +137,12 @@ public class UserService implements UserInterfaces {
                     return new ApplicationException.UserNotFoundException(userId);
                 });
 
-        // 현재 비밀번호 검증 - 일치하지 않으면 UserPasswordNotMatchException 발생
-        if (!passwordEncoder.matches(currentPassword, userEntity.getUserPassword())) {
-            throw new ApplicationException.UserPasswordNotMatchException(userId);
-        }
+        // 현재 비밀번호 검증 - UserSecurityService 사용
+        userSecurityService.validateCurrentPassword(userEntity, currentPassword);
 
         try {
-            // 새 비밀번호 암호화 및 저장
-            String encodedNewPassword = passwordEncoder.encode(newPassword);
+            // 새 비밀번호 암호화 및 저장 - UserSecurityService 사용
+            String encodedNewPassword = userSecurityService.encodePassword(newPassword);
             userEntity.updateUserPassword(encodedNewPassword);
             userRepository.save(userEntity);
 

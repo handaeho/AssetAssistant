@@ -19,7 +19,7 @@ import kr.daeho.AssetAssistant.users.entity.UserEntity;
  * -> DB 연산을 추상화하여 비즈니스 로직과 분리
  * -> 테스트 용이성 향상. DB 구현체 변경에 유연하게 대응 가능
  */
-public interface UserReposiory extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
     /**
      * 사용자 아이디로 사용자 정보 조회 (조회 결과가 없을 경우 Optional.empty 반환(NPE 방지))
      * 

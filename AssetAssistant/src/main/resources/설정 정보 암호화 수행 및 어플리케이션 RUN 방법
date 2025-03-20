@@ -1,3 +1,5 @@
+<설정 정보 암호화 수행 및 프로덕션 어플리케이션 RUN 방법>
+
 1. Gradle 태스크로 문자열 암호화 수행 (DB URL, 아이디, 패스워드 등)
 -> .\gradlew encryptValue -Pvalue="your-value-to-encrypt" -Pkey="your-secure-master-key"
 

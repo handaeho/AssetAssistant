@@ -9,7 +9,7 @@ import org.springframework.security.core.userdetails.User;
 
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
-import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.users.repository.UserRepository;
 
 /**
  * Spring Security의 UserDetailsService 인터페이스 구현 서비스 클래스
@@ -35,7 +35,7 @@ public class SecurityUserDetailService implements UserDetailsService {
     /**
      * 사용자 정보를 조회하기 위한 리포지토리 주입
      */
-    private final UserReposiory userRepository;
+    private final UserRepository userRepository;
 
     /**
      * userId로 DB에서 사용자 정보 조회

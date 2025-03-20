@@ -1,6 +1,7 @@
 package kr.daeho.AssetAssistant.users.dto;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,6 +40,9 @@ public class UserDto {
 
     // 사용자 직업
     private String userJob;
+
+    // 사용자 생년월일
+    private LocalDate userBirthDate;
 
     // 사용자 정보 수정일
     private LocalDateTime userUpdatedAt;

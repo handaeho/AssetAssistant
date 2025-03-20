@@ -3,16 +3,15 @@ package kr.daeho.AssetAssistant.users.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.transaction.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import kr.daeho.AssetAssistant.users.repository.UserReposiory;
+import kr.daeho.AssetAssistant.users.repository.UserRepository;
 import kr.daeho.AssetAssistant.users.interfaces.UserSignupInterfaces;
 import kr.daeho.AssetAssistant.users.dto.UserDto;
 import kr.daeho.AssetAssistant.users.entity.UserEntity;
-import kr.daeho.AssetAssistant.users.enums.UserRoleEnum;
 import kr.daeho.AssetAssistant.users.dto.SignupRequestDto;
 import kr.daeho.AssetAssistant.common.utils.ModelMapper;
+import kr.daeho.AssetAssistant.common.exception.ApplicationException;
 
 /**
  * 사용자 회원가입 서비스 -> 사용자 회원가입 기능 담당
@@ -33,8 +32,8 @@ import kr.daeho.AssetAssistant.common.utils.ModelMapper;
 @Slf4j
 public class UserSignupService implements UserSignupInterfaces {
     // final로 선언해 불변성 보장, @RequiredArgsConstructor로 생성자 자동 생성 및 의존성 주입
-    private final UserReposiory userRepository; // 사용자 정보 저장을 위한 리포지토리
-    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화를 위한 패스워드 인코더
+    private final UserRepository userRepository; // 사용자 정보 저장을 위한 리포지토리
+    private final UserSecurityService securityService; // 보안 관련 로직을 위한 서비스
     private final ModelMapper modelMapper; // 엔티티와 DTO 간 변환을 위한 모델 매퍼
 
     /**
@@ -59,21 +58,40 @@ public class UserSignupService implements UserSignupInterfaces {
     public UserDto signup(SignupRequestDto signupRequestDto) {
         log.info("사용자 회원가입 요청 처리: {}", signupRequestDto.getUserId());
 
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());
+        // 아이디 중복 최종 확인 (동시성 문제 해결)
+        checkUserIdDuplicate(signupRequestDto.getUserId());
 
-        // 사용자 생성
-        UserEntity userEntity = UserEntity.builder()
-                .userId(signupRequestDto.getUserId())
-                .userPassword(encodedPassword)
-                .userName(signupRequestDto.getUserName())
-                .role(UserRoleEnum.USER)
-                .build();
+        // 비밀번호 암호화 - 보안 서비스로 위임
+        String encodedPassword = securityService.encodePassword(signupRequestDto.getPassword());
+
+        // ModelMapper를 사용하여 DTO를 Entity로 변환
+        UserEntity userEntity = modelMapper.signUpRequestToUserEntity(signupRequestDto, encodedPassword);
 
         // 사용자 저장
         userRepository.save(userEntity);
 
-        return modelMapper.toUserDto(userEntity);
+        log.info("회원가입 완료: {}", signupRequestDto.getUserId());
 
+        return modelMapper.toUserDto(userEntity);
+    }
+
+    /**
+     * 아이디 중복 확인 (동시성 고려)
+     * 
+     * 레이스 컨디션 방지 (같은 자원에 여러 프로세스가 동시에 접근해 데이터 불일치 방지)
+     * 
+     * synchronized: 현재 데이터에 접근 중인 스레드를 제외하고, 다른 스레드는 접근 방지
+     * 
+     * 같은 아이디를 서로 다른 사용자가 동시에 등록하려고 할 때, 데이터 불일치 방지
+     * 
+     * @param userId 사용자 아이디
+     * @throws ApplicationException.UserAlreadyExistsException 아이디 중복 시
+     */
+    private void checkUserIdDuplicate(String userId) {
+        synchronized (this.getClass()) {
+            if (userRepository.existsByUserId(userId)) {
+                throw new ApplicationException.UserAlreadyExistsException(userId);
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ package kr.daeho.AssetAssistant.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Spring Security 설정 클래스
@@ -99,6 +102,7 @@ public class SecurityConfig {
                         .requestMatchers("/",
                                 "/api/auth/**",
                                 "/api/users/signup",
+                                "/api/users/check-id-duplicate",
                                 "/h2-console/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
@@ -178,5 +182,32 @@ public class SecurityConfig {
 
         // BCrypt 알고리즘을 사용하는 PasswordEncoder 빈을 생성 -> 모든 시큐리티 관련 클래스에서 주입받아 사용
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * CORS 설정 (WebMvcConfigurer 인터페이스의 구현체)
+     * 
+     * CORS(Cross-Origin Resource Sharing):
+     * 웹 애플리케이션에서 다른 출처의 리소스를 요청할 수 있도록 하는 보안 정책
+     * 
+     * @Configuration: 설정 정의 및 빈 정의 등 설정 관련 클래스를 위한 특수 목적의 어노테이션
+     *                 - @Component의 특수화된 형태
+     *                 - 내부에서 싱글톤 보장을 위한 CGLIB 프록시를 사용하기 위함
+     *                 -> 내부의 @Bean 메서드 호출을 가로채어 싱글톤 보장을 위해 CGLIB 프록시를 적용해서,
+     *                 -> @Configuration를 적용한 클래스 내에서 @Bean이 적용된 메소드를 통해 빈을 생성하고,
+     *                 -> 이 메소드를 여러 번 요청해도 같은 인스턴스가 반환되는 것을 보장
+     * @NonNull: 메서드 매개변수가 null이 되지 않도록 보장
+     * @param registry CorsRegistry 객체
+     */
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+        @Override
+        public void addCorsMappings(@NonNull CorsRegistry registry) {
+            registry.addMapping("/**")
+                    .allowedOrigins("http://localhost:3000") // 프론트엔드 URL
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true);
+        }
     }
 }
