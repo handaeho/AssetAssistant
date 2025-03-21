@@ -42,4 +42,7 @@ public class LoginRequestDto {
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
     @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$", message = "비밀번호는 최소 하나의 문자, 숫자, 특수문자를 포함해야 합니다")
     private String password;
+
+    // 디바이스 식별자 (선택 사항) - 여러 기기에서의 로그인 지원을 위해 추가
+    private String deviceId;
 }

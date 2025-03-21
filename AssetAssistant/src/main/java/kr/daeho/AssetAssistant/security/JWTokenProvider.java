@@ -2,6 +2,8 @@ package kr.daeho.AssetAssistant.security;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import io.jsonwebtoken.Claims;
@@ -18,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import kr.daeho.AssetAssistant.common.exception.ApplicationException;
+import kr.daeho.AssetAssistant.auth.service.TokenBlacklistService;
 
 /**
  * JWT 토큰 생성 및 검증 클래스
@@ -66,19 +69,38 @@ public class JWTokenProvider {
     private final SecurityUserDetailService userDetailsService;
 
     /**
+     * 디바이스 ID 클레임 키 (여러 기기에서 로그인 시 사용)
+     */
+    private static final String DEVICE_ID_CLAIM = "deviceId";
+
+    /**
+     * 토큰 블랙리스트 서비스
+     */
+    private final TokenBlacklistService tokenBlacklistService;
+
+    /**
      * JWTokenProvider 객체가 생성될 때, 필요한 의존성(토큰 서명용 비밀키, 사용자 정보 서비스)을 전달받아 내부 필드를 초기화
      * 
      * @Autowired: 스프링 컨테이너에서 필요한 의존성 자동 주입
      * @Value: application.properties에서 주입받은 값을 필드에 할당
-     * @param userDetailsService 사용자 상세 정보 커스텀 서비스 (인증 세부정보 로드)
+     * 
+     * @param secretKey             JWT 시크릿 키
+     * @param userDetailsService    사용자 상세 정보 커스텀 서비스 (인증 세부정보 로드)
+     * @param tokenBlacklistService 토큰 블랙리스트 관리 서비스
      */
     @Autowired
-    public JWTokenProvider(@Value("${jwt.secret-key}") String secretKey, SecurityUserDetailService userDetailsService) {
+    public JWTokenProvider(
+            @Value("${jwt.secret-key}") String secretKey,
+            SecurityUserDetailService userDetailsService,
+            TokenBlacklistService tokenBlacklistService) {
         // JWT 생성 및 검증 시 필요한 비밀키 할당
         this.secretKey = secretKey;
 
         // JWT 토큰 검증 시 필요한 사용자 상세 정보 로드 서비스 할당
         this.userDetailsService = userDetailsService;
+
+        // 토큰 블랙리스트 서비스 할당
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     /**
@@ -92,67 +114,80 @@ public class JWTokenProvider {
     }
 
     /**
-     * JWT 액세스 토큰 생성
+     * 사용자 ID와 디바이스 ID로 액세스 토큰 생성
      * 
-     * Authentication: 사용자 인증정보를 캡슐화하는 인터페이스
-     * - Authentication.getPrincipal(): 인증대상(사용자 정보)
-     * - Authentication.getCredentials(): 인증 자격증명(비밀번호)
-     * - Authentication.getAuthorities(): 사용자 권한 목록
-     * 
-     * 로그인 요청 시, UsernamePasswordAuthenticationToken 처럼,
-     * Authentication 구현한 객체를 생성해 인증요청
-     * 
-     * @param authentication 인증 정보
-     * @return 생성된 JWT 액세스 토큰
+     * @param userId   사용자 ID
+     * @param deviceId 디바이스 ID
+     * @return JWT 액세스 토큰
      */
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(String userId, String deviceId) {
         // 현재 시간
-        Date nowTime = new Date();
+        Date now = new Date();
 
         // 액세스 토큰 만료 시간
-        Date accessTokenExpirationTime = new Date(nowTime.getTime() + accessTokenValidity);
+        Date accessTokenExpirationTime = new Date(now.getTime() + accessTokenValidity);
 
-        log.debug("액세스 토큰 생성: 사용자={}, 만료시간={}", authentication.getName(), accessTokenExpirationTime);
+        // 클레임에 디바이스 ID 클레임 키(deviceId)와 디바이스 ID 추가
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(DEVICE_ID_CLAIM, deviceId);
 
         // JWT 토큰 생성
         return Jwts.builder()
-                .subject(authentication.getName()) // 발행 요청 사용자 아이디
-                .issuedAt(nowTime) // 토큰 발행 시간
+                .subject(userId) // 발행 요청 사용자 아이디
+                .claims(claims) // 디바이스 ID 포함한 추가 클레임
+                .issuedAt(now) // 토큰 발행 시간
                 .expiration(accessTokenExpirationTime) // 토큰 만료 시간
+                .signWith(getSigningKey()) // 서명 알고리즘 적용
+                .compact(); // 최종 토큰 생성
+    }
+
+    /**
+     * 사용자 ID만으로 액세스 토큰 생성
+     * 
+     * @param userId 사용자 ID
+     * @return JWT 액세스 토큰
+     */
+    public String generateAccessToken(String userId) {
+        // 디바이스 ID 없는 경우 기본값 사용
+        return generateAccessToken(userId, "default");
+    }
+
+    /**
+     * 사용자 ID와 디바이스 ID로 리프레시 토큰 생성
+     * 
+     * @param userId   사용자 ID
+     * @param deviceId 디바이스 ID
+     * @return JWT 리프레시 토큰
+     */
+    public String generateRefreshToken(String userId, String deviceId) {
+        // 현재 시간
+        Date now = new Date();
+
+        // 리프레시 토큰 만료 시간
+        Date refreshTokenExpirationTime = new Date(now.getTime() + refreshTokenValidity);
+
+        // 클레임에 디바이스 ID 클레임 키(deviceId)와 디바이스 ID 추가
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(DEVICE_ID_CLAIM, deviceId);
+
+        return Jwts.builder()
+                .subject(userId) // 발행 요청 사용자 아이디
+                .claims(claims) // 디바이스 ID 포함한 추가 클레임
+                .issuedAt(now) // 토큰 발행 시간
+                .expiration(refreshTokenExpirationTime) // 토큰 만료 시간
                 .signWith(getSigningKey()) // 서명 알고리즘 및 시크릿 키
                 .compact(); // 최종 토큰 생성
     }
 
     /**
-     * JWT 리프레시 토큰 생성
+     * 사용자 ID만으로 리프레시 토큰 생성
      * 
-     * Authentication: 사용자 인증정보를 캡슐화하는 인터페이스
-     * - Authentication.getPrincipal(): 인증대상(사용자 정보)
-     * - Authentication.getCredentials(): 인증 자격증명(비밀번호)
-     * - Authentication.getAuthorities(): 사용자 권한 목록
-     * 
-     * 로그인 요청 시, UsernamePasswordAuthenticationToken 처럼,
-     * Authentication 구현한 객체를 생성해 인증요청
-     * 
-     * @param authentication 인증 정보
-     * @return 생성된 JWT 액세스 토큰
+     * @param userId 사용자 ID
+     * @return JWT 리프레시 토큰
      */
-    public String generateRefreshToken(Authentication authentication) {
-        // 현재 시간
-        Date nowTime = new Date();
-
-        // 리프레시 토큰 만료 시간
-        Date refreshTokenExpirationTime = new Date(nowTime.getTime() + refreshTokenValidity);
-
-        log.debug("리프레시 토큰 생성: 사용자={}, 만료시간={}", authentication.getName(), refreshTokenExpirationTime);
-
-        // JWT 토큰 생성
-        return Jwts.builder()
-                .subject(authentication.getName()) // 발행 요청 사용자 아이디
-                .issuedAt(nowTime) // 토큰 발행 시간
-                .expiration(refreshTokenExpirationTime) // 토큰 만료 시간
-                .signWith(getSigningKey()) // 서명 알고리즘 및 시크릿 키
-                .compact(); // 최종 토큰 생성
+    public String generateRefreshToken(String userId) {
+        // 디바이스 ID 없는 경우 기본값 사용
+        return generateRefreshToken(userId, "default");
     }
 
     /**
@@ -175,6 +210,31 @@ public class JWTokenProvider {
         } catch (Exception e) {
             log.error("JWT 토큰 파싱 오류: {}", e.getMessage());
             throw new ApplicationException.GetUserIdFromTokenFailedException(e.getMessage());
+        }
+    }
+
+    /**
+     * JWT 토큰에서 디바이스 ID 추출
+     * 
+     * @param token JWT 토큰
+     * @return 토큰에서 추출한 디바이스 ID, 없으면 "default" 반환
+     */
+    public String getDeviceIdFromToken(String token) {
+        try {
+            // JWT 파서로 클레임 추출 및 서명 검증
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey()) // 서명 검증용 시크릿 키 설정
+                    .build() // 토큰 파서 빌드
+                    .parseSignedClaims(token) // 서명된 클레임 추출(서명 검증 수행)
+                    .getPayload(); // 실제 클레임 정보 추출
+
+            // 클레임에서 디바이스 ID 추출, 없으면 기본값 반환
+            return claims.get(DEVICE_ID_CLAIM, String.class) != null
+                    ? claims.get(DEVICE_ID_CLAIM, String.class)
+                    : "default";
+        } catch (Exception e) {
+            log.error("JWT 토큰에서 디바이스 ID 추출 오류: {}", e.getMessage());
+            return "default";
         }
     }
 
@@ -205,13 +265,19 @@ public class JWTokenProvider {
     }
 
     /**
-     * JWT 토큰 유효성 검증
+     * JWT 토큰 유효성 검증 (블랙리스트 확인 포함)
      * 
      * @param token JWT 토큰
      * @return 유효 여부
      */
     public boolean validateToken(String token) {
         try {
+            // 블랙리스트 확인
+            if (tokenBlacklistService.isBlacklisted(token)) {
+                log.error("블랙리스트에 등록된 토큰입니다.");
+                throw new ApplicationException.InvalidTokenException("블랙리스트에 등록된 토큰");
+            }
+
             // JWT 파서로 클레임 추출 및 서명 검증
             Jwts.parser()
                     .verifyWith(getSigningKey()) // 서명 검증용 시크릿 키 설정
@@ -249,5 +315,46 @@ public class JWTokenProvider {
      */
     public long getTokenExpirationTime() {
         return accessTokenValidity / 1000;
+    }
+
+    /**
+     * 리프레시 토큰 만료 시간 가져오기
+     * 
+     * @return 토큰 만료 시간(초)
+     */
+    public long getRefreshTokenExpirationTime() {
+        return refreshTokenValidity / 1000;
+    }
+
+    /**
+     * 토큰을 블랙리스트에 추가
+     * 
+     * @param token 블랙리스트에 추가할 토큰
+     */
+    public void blacklistToken(String token) {
+        try {
+            // 토큰의 남은 만료 시간 계산
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+
+            // 만료 시간이 현재보다 이후인 경우에만 블랙리스트에 추가
+            if (expiration != null && expiration.after(now)) {
+                // 블랙리스트에 추가 (남은 시간(초) 동안만 유지)
+                long ttl = (expiration.getTime() - now.getTime()) / 1000;
+                tokenBlacklistService.addToBlacklist(token, ttl);
+                log.debug("토큰이 블랙리스트에 추가됨: {}, 만료 시간: {}초", token, ttl);
+            }
+        } catch (ExpiredJwtException e) {
+            // 이미 만료된 토큰은 블랙리스트에 추가할 필요 없음
+            log.debug("이미 만료된 토큰은 블랙리스트에 추가하지 않음: {}", token);
+        } catch (Exception e) {
+            log.error("토큰 블랙리스트 추가 중 오류 발생: {}", e.getMessage());
+        }
     }
 }

@@ -1,8 +1,8 @@
 package kr.daeho.AssetAssistant.security;
 
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,8 +15,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import kr.daeho.AssetAssistant.auth.interfaces.AuthInterfaces;
 
 /**
  * Spring Security 설정 클래스
@@ -50,9 +53,9 @@ public class SecurityConfig {
     private final SecurityUserDetailService userDetailsService;
 
     /**
-     * JWT 토큰 제공자 주입
+     * 인증 서비스 인터페이스 주입
      */
-    private final JWTokenProvider tokenProvider;
+    private final AuthInterfaces authInterfaces;
 
     /**
      * AuthenticationManager 빈을 Spring 컨테이너에 등록
@@ -77,9 +80,10 @@ public class SecurityConfig {
      * 
      * [설정 항목]
      * 1. CSRF 비활성화 (STATELESS 세션 정책)
-     * 2. URL 패턴별 접근 권한 설정
-     * 3. 커스텀 필터 추가 (JWT 인증 및 인가)
-     * 4. 세션 관리 정책 설정
+     * 2. CORS 설정 적용
+     * 3. URL 패턴별 접근 권한 설정
+     * 4. 커스텀 필터 추가 (JWT 인증 및 인가)
+     * 5. 세션 관리 정책 설정
      * 
      * 참고: Spring Security 6.1.0 부터 메서드 체이닝의 사용을 지양, 람다식을 통해 함수형으로 설정 지향
      * 
@@ -94,6 +98,8 @@ public class SecurityConfig {
         http
                 // CSRF 보호 비활성화 (토큰 기반 인증의 경우 보통 필요 없기 때문)
                 .csrf(csrf -> csrf.disable())
+                // CORS 설정 적용 (corsConfigurationSource 빈 사용)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // 세션 사용 X (무상태 세션 정책. JWT 기반 인증을 사용하므로 세션 관리 필요 X)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // URL 별 접근 권한 설정
@@ -118,10 +124,9 @@ public class SecurityConfig {
                 // JWT 인증 필터 추가 -> UsernamePasswordAuthenticationFilter 이전에 JWT 인증 필터를 실행하기 위함
                 // addFilterBefore(): 지정한 필터를 특정 클래스에 해당하는 필터보다 앞에 추가
                 // HTTP 요청 -> jwtAuthenticationFilter -> UsernamePasswordAuthenticationFilter
-                .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(authInterfaces),
                         UsernamePasswordAuthenticationFilter.class);
 
-        // 구성된 보안 필터 체인 반환
         return http.build();
     }
 
@@ -185,29 +190,37 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS 설정 (WebMvcConfigurer 인터페이스의 구현체)
+     * CORS 설정 소스 빈 생성
      * 
      * CORS(Cross-Origin Resource Sharing):
      * 웹 애플리케이션에서 다른 출처의 리소스를 요청할 수 있도록 하는 보안 정책
      * 
-     * @Configuration: 설정 정의 및 빈 정의 등 설정 관련 클래스를 위한 특수 목적의 어노테이션
-     *                 - @Component의 특수화된 형태
-     *                 - 내부에서 싱글톤 보장을 위한 CGLIB 프록시를 사용하기 위함
-     *                 -> 내부의 @Bean 메서드 호출을 가로채어 싱글톤 보장을 위해 CGLIB 프록시를 적용해서,
-     *                 -> @Configuration를 적용한 클래스 내에서 @Bean이 적용된 메소드를 통해 빈을 생성하고,
-     *                 -> 이 메소드를 여러 번 요청해도 같은 인스턴스가 반환되는 것을 보장
-     * @NonNull: 메서드 매개변수가 null이 되지 않도록 보장
-     * @param registry CorsRegistry 객체
+     * Spring Security의 CORS 필터에서 사용할 설정을 제공 (Spring Security에서 권장하는 CORS 설정 방식)
+     * 
+     * SecurityFilterChain의 .cors() 메서드에서 이 빈을 사용
+     * 
+     * @return CorsConfigurationSource 객체
      */
-    @Configuration
-    public class WebConfig implements WebMvcConfigurer {
-        @Override
-        public void addCorsMappings(@NonNull CorsRegistry registry) {
-            registry.addMapping("/**")
-                    .allowedOrigins("http://localhost:3000") // 프론트엔드 URL
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*")
-                    .allowCredentials(true);
-        }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration(); // CORS 설정 객체 생성
+
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // 허용할 출처
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용할 HTTP 메서드
+        configuration.setAllowedHeaders(Arrays.asList("*")); // 허용할 헤더
+        configuration.setAllowCredentials(true); // 인증 정보 허용
+
+        // 인증 헤더도 클라이언트에 노출
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        // 1시간 동안 preflight 요청 캐싱
+        configuration.setMaxAge(3600L);
+
+        // UrlBasedCorsConfigurationSource: 특정 경로에 대한 CORS 설정을 정의하는 클래스
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // 모든 경로에 대해 위의 설정을 적용
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 }

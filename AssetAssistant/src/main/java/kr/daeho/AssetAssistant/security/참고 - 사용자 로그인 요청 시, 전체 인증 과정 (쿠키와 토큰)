@@ -1,0 +1,84 @@
+1. 로그인 단계
+    1.1 로그인 요청
+        사용자가 아이디, 비밀번호, 디바이스ID(선택)를 입력하여 /api/auth/login 엔드포인트로 POST 요청
+        AuthController의 login() 메서드에서 이 요청을 받음
+        @Validated 어노테이션으로 로그인 요청 데이터 유효성 검증 (아이디 길이, 비밀번호 복잡성 등)
+    1.2 인증 처리
+        AuthService의 login() 메서드로 요청 전달
+        UsernamePasswordAuthenticationToken 생성하여 인증 객체 준비
+        authenticationManager.authenticate()를 호출하여 인증 프로세스 시작
+        내부적으로 SecurityUserDetailService를 통해 사용자 정보 로드
+        BCryptPasswordEncoder로 입력 비밀번호와 저장된 해시 비교
+        인증 성공 시 SecurityContextHolder에 인증 정보 저장
+    1.3 토큰 발급
+        사용자 ID와 디바이스 ID(제공된 경우)로 JWT 토큰 생성
+        JWTokenProvider의 generateAccessToken(), generateRefreshToken() 메서드 호출
+        액세스 토큰(짧은 유효기간)과 리프레시 토큰(긴 유효기간) 생성
+        토큰에 사용자 ID와 디바이스 ID 정보 포함
+    1.4 Redis에 토큰 저장
+        복합키(userId:deviceId) 생성
+        TokenRedisEntity 객체 생성하여 토큰 정보 저장
+        tokenRedisRepository.save()로 Redis에 저장
+        토큰 유효기간(TTL) 설정 (리프레시 토큰 기준 7일)
+    1.5 클라이언트에 토큰 전달
+        액세스 토큰은 일반 쿠키에 저장 (30분 유효기간)
+        리프레시 토큰은 보안 쿠키에 저장 (7일 유효기간, HttpOnly, Secure, SameSite)
+        응답에서 토큰 값 제외하고 사용자 정보만 반환
+
+2. API 요청 및 인증 검증 단계
+    2.1 인증이 필요한 API 요청
+        클라이언트가 쿠키에 저장된 액세스 토큰과 함께 보호된 리소스 요청
+        요청이 JwtAuthenticationFilter를 통과
+    2.2 토큰 검증
+        extractTokenFromCookie() 메서드로 쿠키에서 액세스 토큰 추출
+        authInterfaces.validateToken() 메서드로 토큰 유효성 검증
+        JWTokenProvider의 validateToken() 메서드 호출
+        토큰이 블랙리스트에 있는지 확인
+        서명 검증 및 만료 여부 확인
+        Redis에 토큰이 존재하는지 확인
+    2.3 인증 정보 설정
+        토큰 검증 성공 시 사용자 ID 추출
+        createAuthenticationToken() 메서드로 인증 객체 생성
+        SecurityContextHolder에 인증 정보 저장
+        필터 체인 계속 진행
+    2.4 접근 권한 검증
+        SecurityConfig에 정의된 URL 패턴별 접근 권한 규칙 적용
+        인증된 사용자만 접근 가능한 리소스 보호
+        권한이 있으면 컨트롤러 메서드 실행, 없으면 403 Forbidden 응답
+
+3. 토큰 갱신 단계
+    3.1 액세스 토큰 만료
+        액세스 토큰 만료 시 API 요청에서 401 Unauthorized 응답
+        클라이언트는 리프레시 토큰으로 새 액세스 토큰 요청
+    3.2 토큰 갱신 요청
+        /api/auth/refresh 엔드포인트로 리프레시 토큰과 함께 POST 요청
+        AuthController의 refresh() 메서드에서 요청 처리
+    3.3 리프레시 토큰 검증
+        AuthService의 refreshToken() 메서드 호출
+        리프레시 토큰 유효성 검증
+        토큰에서 사용자 ID 및 디바이스 ID 추출
+        Redis에서 리프레시 토큰 정보 확인
+    3.4 새 액세스 토큰 발급
+        JWTokenProvider의 generateAccessToken() 메서드로 새 액세스 토큰 생성
+        Redis의 토큰 정보 업데이트 (setAccessToken() 메서드 사용)
+        새 액세스 토큰을 쿠키에 설정하여 클라이언트에 전달
+
+4. 로그아웃 단계
+    4.1 로그아웃 요청
+        /api/auth/logout 엔드포인트로 POST 요청
+        선택적으로 특정 디바이스만 로그아웃하기 위한 deviceId 파라미터 포함 가능
+    4.2 토큰 검증 및 사용자 식별
+        쿠키에서 액세스 토큰 추출
+        토큰 검증하여 사용자 ID 획득
+    4.3 토큰 무효화
+        디바이스 ID 지정 시:
+        해당 디바이스의 토큰만 무효화 (logout(userId, deviceId))
+        디바이스 ID 미지정 시:
+        사용자의 모든 디바이스 토큰 무효화 (logout(userId))
+    4.4 블랙리스트 추가 및 삭제
+        토큰 블랙리스트에 액세스 토큰과 리프레시 토큰 추가 (tokenProvider.blacklistToken())
+        Redis에서 토큰 정보 삭제 (tokenRedisRepository.deleteById() 또는 deleteAllByUserId())
+        보안 컨텍스트 정보 제거 (SecurityContextHolder.clearContext())
+    4.5 클라이언트 쿠키 삭제
+        응답에서 액세스 토큰과 리프레시 토큰 쿠키 삭제 (CookieUtil.deleteCookie())
+        204 No Content 상태 코드 반환

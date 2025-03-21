@@ -22,6 +22,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  redis:
+    host: localhost
+    port: 6379
+    # password: # 필요시 비밀번호 추가
 
 jwt:
   secret-key: 'AssetAssistantSecretKey1234567890AssetAssistantSecretKey1234567890'
@@ -53,6 +57,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect # hibernate에서 MySQL 문법 사용 설정
+  redis: # TODO: 암호화 확인
+    host: ENC(aV4bFj9Gz5YS7D2rmJp0CqGcwdlZd8Xf)
+    port: 6379
+    password: ENC(iP5jQgb8nK9DpXr7sT2zCvL1mHqA3eWt)
 
 jwt:
   secret-key: ENC(FuGrdANoU4Eg5wIvixMLRkiqfyVb56PvwxkOcVhtKVAmXn1fALpAPTiPjyUrJoP6dDrbuGcbAod21rIbSg20cf17BB6Is33iq9aCFGldZ+81Movk+jTxV7BSkEm+aZlrJq4zguEnR9eI9E1LLCGLgQ==)

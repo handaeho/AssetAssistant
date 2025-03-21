@@ -1,10 +1,10 @@
 package kr.daeho.AssetAssistant.auth.interfaces;
 
-import kr.daeho.AssetAssistant.auth.dto.TokenResponseDto;
+import java.util.Map;
 import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
 
 /**
- * 사용자 로그인 인터페이스
+ * 사용자 인증 인터페이스
  * 
  * 클래스에서 가져야하는 메소드의 이름, 파라미터, 리턴값 등을 정의
  * 
@@ -17,31 +17,43 @@ import kr.daeho.AssetAssistant.auth.dto.LoginRequestDto;
  */
 public interface AuthInterfaces {
     /**
-     * 사용자 로그인
+     * 사용자 로그인 처리
      * 
      * @param loginRequestDto 로그인 요청 정보
-     * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
-     * @return TokenResponseDto (액세스 토큰과 리프레시 토큰, 만료시간, 타입)
+     * @return Map<String, Object> 로그인 성공 시 토큰 정보 (사용자 ID, 액세스 토큰, 리프레시 토큰)
      */
-    TokenResponseDto login(LoginRequestDto loginRequestDto);
-
-    // TODO: 토큰 갱신 시, 액세스 토큰과 리프레시 토큰 모두 재발급하게 변경
+    Map<String, Object> login(LoginRequestDto loginRequestDto);
 
     /**
-     * 리프레시 토큰을 받아, 새 액세스 토큰을 발급 (리프레시 토큰은 기존 것을 유지)
+     * 토큰 검증
+     * 
+     * @param accessToken 액세스 토큰
+     * @return 사용자 ID
+     */
+    String validateToken(String accessToken);
+
+    /**
+     * 토큰 갱신 - 리프레시 토큰으로 새 액세스 토큰 발급
      * 
      * @param refreshToken 리프레시 토큰
-     * @throws ApplicationExceptions 아이디 중복 등 예외 발생 시
-     * @return TokenResponseDto (새로운 액세스 토큰, 기존 리프레시 토큰, 만료시간, 타입)
+     * @return Map<String, Object> 갱신된 새 토큰 정보 (사용자 ID, 액세스 토큰, 리프레시 토큰)
      */
-    TokenResponseDto refreshToken(String refreshToken);
+    Map<String, Object> refreshToken(String refreshToken);
 
     /**
-     * 로그아웃 처리
+     * 로그아웃 처리 - 모든 디바이스
      * 
-     * @param token 액세스 토큰
+     * @param userId 사용자 ID
      */
-    void logout(String token);
+    void logout(String userId);
+
+    /**
+     * 로그아웃 처리 - 특정 디바이스
+     * 
+     * @param userId   사용자 ID
+     * @param deviceId 디바이스 ID
+     */
+    void logout(String userId, String deviceId);
 
     // default 메소드
     // 인터페이스에서 작성한 기능은 반드시 상속받는 구현 메소드에서 작성되어야 함함
